@@ -1328,6 +1328,7 @@ class CloudSyncManager {
                 // 保存到本地存储
                 localStorage.setItem('giteeToken', this.token);
                 localStorage.setItem('giteeUsername', this.username);
+                localStorage.setItem('giteeOwner', this.username); // 修复：保存仓库所有者
                 
                 // 创建或获取仓库
                 await this.createOrGetRepo();
@@ -1437,8 +1438,11 @@ class CloudSyncManager {
 
     // 同步到云端
     async syncToCloud() {
-        if (!this.token || !this.repoOwner) return;
-        
+        if (!this.token || !this.repoOwner) {
+            this.taskManager.showNotification('❌ 请先登录 Gitee 云同步!', 'error');
+            return;
+        }
+
         try {
             // 先获取文件的SHA
             const getResponse = await fetch(
@@ -1451,6 +1455,7 @@ class CloudSyncManager {
             );
 
             if (!getResponse.ok) {
+                this.taskManager.showNotification('❌ 获取云端数据失败，请检查网络!', 'error');
                 console.error('获取文件失败');
                 return;
             }
@@ -1478,15 +1483,20 @@ class CloudSyncManager {
 
             this.updateLastSyncTime();
             console.log('云端同步成功');
+            this.taskManager.showNotification('✅ 数据已同步到云端!', 'success');
         } catch (error) {
             console.error('同步失败:', error);
+            this.taskManager.showNotification('❌ 同步失败，请重试!', 'error');
         }
     }
 
     // 从云端同步
     async syncFromCloud() {
-        if (!this.token || !this.repoOwner) return;
-        
+        if (!this.token || !this.repoOwner) {
+            this.taskManager.showNotification('❌ 请先登录 Gitee 云同步!', 'error');
+            return;
+        }
+
         try {
             const response = await fetch(
                 `https://gitee.com/api/v5/repos/${this.repoOwner}/${this.repoName}/contents/${this.filePath}?ref=${this.branch}`,
@@ -1498,6 +1508,7 @@ class CloudSyncManager {
             );
 
             if (!response.ok) {
+                this.taskManager.showNotification('❌ 云端没有数据，首次请先在另一设备上传!', 'info');
                 console.error('获取云端数据失败');
                 return;
             }
@@ -1509,8 +1520,10 @@ class CloudSyncManager {
             // 合并云端数据
             this.mergeCloudData(data);
             this.updateLastSyncTime();
+            this.taskManager.showNotification('✅ 数据已从云端同步!', 'success');
         } catch (error) {
             console.error('从云端同步失败:', error);
+            this.taskManager.showNotification('❌ 同步失败，请重试!', 'error');
         }
     }
 
