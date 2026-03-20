@@ -1128,27 +1128,60 @@ class CuteTaskManager {
         return time ? `${dateDisplay} ${time}` : dateDisplay;
     }
 
-    // 显示通知
+    // 显示通知（可爱版）
     showNotification(message, type = 'info') {
         const notification = document.getElementById('notification');
         const icon = notification.querySelector('.notification-icon');
         const text = notification.querySelector('.notification-text');
-        
+
+        // 超级可爱的图标
         const icons = {
-            success: '✅',
-            error: '❌',
+            success: '🎉',
+            error: '😢',
             warning: '⚠️',
-            info: 'ℹ️'
+            info: '💡'
         };
-        
+
         icon.textContent = icons[type];
         text.textContent = message;
-        
+
         notification.className = 'notification show ' + type;
-        
+
+        // 成功时触发可爱效果
+        if (type === 'success') {
+            this.triggerCelebration();
+        }
+
         setTimeout(() => {
             notification.classList.remove('show');
         }, 3000);
+    }
+
+    // 触发可爱庆祝效果
+    triggerCelebration() {
+        const emojis = ['🌟', '✨', '💖', '🎀', '🌸', '🎈', '🎁', '💝'];
+
+        for (let i = 0; i < 12; i++) {
+            setTimeout(() => {
+                const emoji = document.createElement('div');
+                emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                emoji.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    font-size: 30px;
+                    pointer-events: none;
+                    z-index: 9999;
+                    animation: celebrate 1s ease-out forwards;
+                    --tx: ${(Math.random() - 0.5) * 300}px;
+                    --ty: ${(Math.random() - 0.5) * 300 - 200}px;
+                    --r: ${Math.random() * 720}deg;
+                `;
+                document.body.appendChild(emoji);
+
+                setTimeout(() => emoji.remove(), 1000);
+            }, i * 50);
+        }
     }
 
     // 关闭模态框
