@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>💖 游戏化完整版</title>
+    <link rel="stylesheet" href="styles-mobile-v2.css">
+    <style>
+        /* 强制显示移动端样式 */
+        @media (min-width: 768px) {
+            body {
+                background: #f5f5f5;
+            }
+            .container {
+                max-width: 420px;
+                margin: 20px auto;
+                border-radius: 30px;
+                overflow: hidden;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            }
+            .bottom-nav {
+                display: flex !important;
+            }
+            .fab {
+                display: flex !important;
+            }
+        }
+
+        /* 隐藏/显示不同页面 */
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+
+        /* 奖励商店卡片 */
+        .reward-card {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        .reward-card:active {
+            transform: scale(0.98);
+        }
+
+        .reward-card.locked {
+            opacity: 0.5;
+        }
+
+        .reward-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .reward-icon {
+            font-size: 3em;
+        }
+
+        .reward-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #667eea;
+            flex: 1;
+        }
+
+        .reward-cost {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+        }
+
+        .reward-desc {
+            color: #666;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .reward-progress {
+            margin-top: 12px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FF9A9E 0%, #FFBAC3 100%);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.5) 50%, transparent 100%);
+            animation: shimmer 2s infinite;
+        }
+
+        .reward-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85em;
+            color: #999;
+        }
+
+        .claim-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%);
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+            box-shadow: 0 4px 15px rgba(255, 154, 158, 0.4);
+            transition: all 0.3s;
+        }
+
+        .claim-btn:active {
+            transform: scale(0.95);
+        }
+
+        .claim-btn:disabled {
+            background: #ccc;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* 设置卡片 */
+        .setting-card {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 15px;
+        }
+
+        .setting-card h3 {
+            color: #667eea;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .setting-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-label {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95em;
+            color: #333;
+        }
+
+        .setting-icon {
+            font-size: 1.3em;
+        }
+
+        .setting-desc {
+            font-size: 0.8em;
+            color: #999;
+            margin-top: 3px;
+        }
+
+        .setting-input {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 0.9em;
+            transition: all 0.3s;
+            flex: 1;
+        }
+
+        .setting-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .toggle-switch {
+            width: 50px;
+            height: 28px;
+            background: #e0e0e0;
+            border-radius: 14px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            transition: left 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .toggle-switch.active::after {
+            left: 25px;
+        }
+
+        .setting-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .setting-btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .setting-btn.danger {
+            background: linear-gradient(135deg, #f44336 0%, #e91e63 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);
+        }
+
+        .setting-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 云同步状态 */
+        .sync-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin-top: 10px;
+        }
+
+        .sync-status.connected {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(139, 195, 74, 0.1) 100%);
+            border: 2px solid #4caf50;
+        }
+
+        .sync-status.disconnected {
+            background: linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(233, 30, 99, 0.1) 100%);
+            border: 2px solid #f44336;
+        }
+
+        .sync-status-text {
+            flex: 1;
+            font-size: 0.9em;
+        }
+
+        .sync-status.connected .sync-status-text {
+            color: #4caf50;
+        }
+
+        .sync-status.disconnected .sync-status-text {
+            color: #f44336;
+        }
+
+        /* 全部任务筛选器 */
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            overflow-x: auto;
+            padding: 5px 0;
+        }
+
+        .filter-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .filter-btn {
+            padding: 10px 18px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 20px;
+            font-size: 0.9em;
+            color: #666;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .filter-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-emoji {
+            font-size: 4em;
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ========== 今日页面 ========== -->
+        <div class="page active" id="page-today">
+            <header class="header">
+                <div class="welcome-text">
+                    <h1 id="greeting">💖 你好呀！今天是美好的一天 💖</h1>
+                    <p class="date-text" id="currentDate">2026年3月20日 星期五</p>
+                    <div class="countdown-timer">
+                        <span class="countdown-emoji">⏰</span>
+                        <span class="countdown-time">05:43:00</span>
+                    </div>
+                </div>
+
+                <section class="achievements">
+                    <div class="achievement-badge">
+                        <span class="badge-icon">🔥</span>
+                        <span class="badge-count">7</span>
+                        <span class="badge-label">连续打卡</span>
+                    </div>
+                    <div class="achievement-badge">
+                        <span class="badge-icon">✅</span>
+                        <span class="badge-count">23</span>
+                        <span class="badge-label">今日完成</span>
+                    </div>
+                    <div class="achievement-badge">
+                        <span class="badge-icon">⭐</span>
+                        <span class="badge-count">156</span>
+                        <span class="badge-label">总积分</span>
+                    </div>
+                </section>
+            </header>
+
+            <section class="quick-add">
+                <div class="add-card">
+                    <h2>✨ 新任务 ✨</h2>
+                    <div class="input-group">
+                        <input type="text" placeholder="今天要做什么呢？💭" id="taskTitle">
+                        <button class="add-btn" id="addBtn">➕</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="progress-section">
+                <div class="progress-card">
+                    <div class="progress-header">
+                        <h3>今日进度</h3>
+                        <span class="progress-stats">23/30</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: 77%"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="tasks-section">
+                <h2 class="section-title">📋 今日任务</h2>
+
+                <div class="task-card priority-high">
+                    <div class="task-header">
+                        <div class="task-checkbox" onclick="toggleTask(this)"></div>
+                        <div class="task-content">
+                            <div class="task-title">完成项目报告</div>
+                            <div class="task-meta">
+                                <span class="task-meta-item">🔴 紧急</span>
+                                <span class="task-meta-item">⏰ 18:00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="task-card priority-medium">
+                    <div class="task-header">
+                        <div class="task-checkbox" onclick="toggleTask(this)"></div>
+                        <div class="task-content">
+                            <div class="task-title">学习新技能</div>
+                            <div class="task-meta">
+                                <span class="task-meta-item">🟡 中等</span>
+                                <span class="task-meta-item">⏰ 20:00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="task-card completed">
+                    <div class="task-header">
+                        <div class="task-checkbox checked" onclick="toggleTask(this)"></div>
+                        <div class="task-content">
+                            <div class="task-title">晨间锻炼</div>
+                            <div class="task-meta">
+                                <span class="task-meta-item">✅ 已完成</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ========== 全部任务页面 ========== -->
+        <div class="page" id="page-all">
+            <header class="header">
+                <div class="welcome-text">
+                    <h1>📝 全部任务</h1>
+                    <p class="date-text">共 156 个任务</p>
+                </div>
+            </header>
+
+            <section class="filter-bar">
+                <button class="filter-btn active" data-filter="all">全部</button>
+                <button class="filter-btn" data-filter="pending">未完成</button>
+                <button class="filter-btn" data-filter="completed">已完成</button>
+                <button class="filter-btn" data-filter="high">🔴 紧急</button>
+                <button class="filter-btn" data-filter="today">今日</button>
+                <button class="filter-btn" data-filter="week">本周</button>
+            </section>
+
+            <section class="tasks-section">
+                <div class="task-card priority-high">
+                    <div class="task-header">
+                        <div class="task-checkbox" onclick="toggleTask(this)"></div>
+                        <div class="task-content">
+                            <div class="task-title">完成项目报告</div>
+                            <div class="task-meta">
+                                <span class="task-meta-item">🔴 紧急</span>
+                                <span class="task-meta-item">📅 今天</span>
+                                <span class="task-meta-item">⏰ 18:00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="task-card priority-medium">
+                    <div class="task-header">
+                        <div class="task-checkbox" onclick="toggleTask(this)"></div>
+                        <div class="task-content">
+                            <div class="task-title">学习新技能</div>
+                            <div class="task-meta">
+                                <span class="task-meta-item">🟡 中等</span>
+                                <span class="task-meta-item">📅 今天</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="task-card priority-low">
+                    <div class="task-header">
+                        <div class="task-checkbox" onclick="toggleTask(this)"></div>
+                        <div class="task-content">
+                            <div class="task-title">整理房间</div>
+                            <div class="task-meta">
+                                <span class="task-meta-item">🟢 一般</span>
+                                <span class="task-meta-item">📅 本周</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="task-card completed">
+                    <div class="task-header">
+                        <div class="task-checkbox checked" onclick="toggleTask(this)"></div>
+                        <div class="task-content">
+                            <div class="task-title">晨间锻炼</div>
+                            <div class="task-meta">
+                                <span class="task-meta-item">✅ 已完成</span>
+                                <span class="task-meta-item">📅 今天</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="task-card completed">
+                    <div class="task-header">
+                        <div class="task-checkbox checked" onclick="toggleTask(this)"></div>
+                        <div class="task-content">
+                            <div class="task-title">阅读30分钟</div>
+                            <div class="task-meta">
+                                <span class="task-meta-item">✅ 已完成</span>
+                                <span class="task-meta-item">📅 昨天</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ========== 奖励页面 ========== -->
+        <div class="page" id="page-rewards">
+            <header class="header">
+                <div class="welcome-text">
+                    <h1>🎁 奖励商店</h1>
+                    <p class="date-text">当前积分：<span style="color: #FFD700; font-weight: bold;">⭐ 156</span></p>
+                </div>
+            </header>
+
+            <section>
+                <div class="reward-card">
+                    <div class="reward-header">
+                        <span class="reward-icon">🎮</span>
+                        <div>
+                            <div class="reward-title">游戏时间 1小时</div>
+                            <div class="reward-cost">⭐ 50</div>
+                        </div>
+                    </div>
+                    <p class="reward-desc">完成今天的任务后，可以自由地玩游戏1小时！🎮✨</p>
+                    <button class="claim-btn" onclick="claimReward(this, 50)">领取奖励</button>
+                </div>
+
+                <div class="reward-card">
+                    <div class="reward-header">
+                        <span class="reward-icon">🍦</span>
+                        <div>
+                            <div class="reward-title">冰淇淋一支</div>
+                            <div class="reward-cost">⭐ 30</div>
+                        </div>
+                    </div>
+                    <p class="reward-desc">奖励自己一支美味的冰淇淋！🍦甜蜜一下～</p>
+                    <button class="claim-btn" onclick="claimReward(this, 30)">领取奖励</button>
+                </div>
+
+                <div class="reward-card">
+                    <div class="reward-header">
+                        <span class="reward-icon">📺</span>
+                        <div>
+                            <div class="reward-title">追剧2小时</div>
+                            <div class="reward-cost">⭐ 80</div>
+                        </div>
+                    </div>
+                    <p class="reward-desc">放松一下，追自己喜欢看的剧！📺🍿</p>
+                    <button class="claim-btn" onclick="claimReward(this, 80)">领取奖励</button>
+                </div>
+
+                <div class="reward-card">
+                    <div class="reward-header">
+                        <span class="reward-icon">🛍️</span>
+                        <div>
+                            <div class="reward-title">购物50元</div>
+                            <div class="reward-cost">⭐ 200</div>
+                        </div>
+                    </div>
+                    <div class="reward-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 78%"></div>
+                        </div>
+                        <div class="reward-stats">
+                            <span>已积累：156/200</span>
+                            <span>还差44分</span>
+                        </div>
+                    </div>
+                    <button class="claim-btn" disabled>领取奖励</button>
+                </div>
+
+                <div class="reward-card locked">
+                    <div class="reward-header">
+                        <span class="reward-icon">✈️</span>
+                        <div>
+                            <div class="reward-title">周末旅行</div>
+                            <div class="reward-cost">⭐ 1000</div>
+                        </div>
+                    </div>
+                    <p class="reward-desc">完成一个月的任务后，奖励自己一次周末旅行！🌄</p>
+                    <button class="claim-btn" disabled>领取奖励</button>
+                </div>
+            </section>
+        </div>
+
+        <!-- ========== 设置页面 ========== -->
+        <div class="page" id="page-settings">
+            <header class="header">
+                <div class="welcome-text">
+                    <h1>⚙️ 设置</h1>
+                    <p class="date-text">个性化你的体验</p>
+                </div>
+            </header>
+
+            <section>
+                <!-- 云同步 -->
+                <div class="setting-card">
+                    <h3>☁️ 云同步</h3>
+                    <div class="sync-status connected">
+                        <span style="font-size: 2em;">✅</span>
+                        <div class="sync-status-text">
+                            <div>已连接到 Gitee</div>
+                            <div style="font-size: 0.8em; opacity: 0.8;">上次同步：刚刚</div>
+                        </div>
+                    </div>
+                    <div class="setting-item" style="margin-top: 15px;">
+                        <div class="setting-label">
+                            <span class="setting-icon">🔄</span>
+                            <div>
+                                <div>自动同步</div>
+                                <div class="setting-desc">自动同步任务到云端</div>
+                            </div>
+                        </div>
+                        <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+                    </div>
+                    <button class="setting-btn primary" style="width: 100%; margin-top: 12px;">
+                        🔄 立即同步
+                    </button>
+                </div>
+
+                <!-- 提醒 -->
+                <div class="setting-card">
+                    <h3>🔔 提醒</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <span class="setting-icon">⏰</span>
+                            <div>
+                                <div>任务提醒</div>
+                                <div class="setting-desc">在截止时间前提醒我</div>
+                            </div>
+                        </div>
+                        <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <span class="setting-icon">📅</span>
+                            <div>
+                                <div>截止时间</div>
+                                <div class="setting-desc">每日任务截止时间</div>
+                            </div>
+                        </div>
+                        <input type="time" class="setting-input" value="20:00" style="width: 120px;">
+                    </div>
+                </div>
+
+                <!-- 外观 -->
+                <div class="setting-card">
+                    <h3>🎨 外观</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <span class="setting-icon">🌙</span>
+                            <div>
+                                <div>深色模式</div>
+                                <div class="setting-desc">保护眼睛，夜间使用</div>
+                            </div>
+                        </div>
+                        <div class="toggle-switch" onclick="toggleSwitch(this)"></div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <span class="setting-icon">🎭</span>
+                            <div>
+                                <div>主题色</div>
+                                <div class="setting-desc">选择你喜欢的颜色</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <div style="width: 30px; height: 30px; background: #FF9A9E; border-radius: 50%; border: 3px solid #667eea; cursor: pointer;"></div>
+                            <div style="width: 30px; height: 30px; background: #667eea; border-radius: 50%; cursor: pointer;"></div>
+                            <div style="width: 30px; height: 30px; background: #4caf50; border-radius: 50%; cursor: pointer;"></div>
+                            <div style="width: 30px; height: 30px; background: #f44336; border-radius: 50%; cursor: pointer;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 数据 -->
+                <div class="setting-card">
+                    <h3>💾 数据管理</h3>
+                    <button class="setting-btn primary" style="width: 100%; margin-bottom: 10px;">
+                        📤 导出数据
+                    </button>
+                    <button class="setting-btn primary" style="width: 100%; margin-bottom: 10px;">
+                        📥 导入数据
+                    </button>
+                    <button class="setting-btn danger" style="width: 100%;">
+                        🗑️ 清除所有数据
+                    </button>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- 底部导航栏 -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" data-page="today" onclick="switchPage('today')">
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">今日</span>
+        </div>
+        <div class="nav-item" data-page="all" onclick="switchPage('all')">
+            <span class="nav-icon">📝</span>
+            <span class="nav-label">全部</span>
+        </div>
+        <div class="nav-item" data-page="rewards" onclick="switchPage('rewards')">
+            <span class="nav-icon">🎁</span>
+            <span class="nav-label">奖励</span>
+        </div>
+        <div class="nav-item" data-page="settings" onclick="switchPage('settings')">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-label">设置</span>
+        </div>
+    </nav>
+
+    <!-- 悬浮按钮 -->
+    <button class="fab">➕</button>
+
+    <!-- 通知 -->
+    <div class="notification success">
+        <span class="notification-icon">🎉</span>
+        <span class="notification-text">任务完成啦！太棒了！</span>
+    </div>
+
+    <script>
+        // 切换页面
+        function switchPage(page) {
+            // 隐藏所有页面
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            // 显示目标页面
+            document.getElementById('page-' + page).classList.add('active');
+
+            // 更新导航栏状态
+            document.querySelectorAll('.nav-item').forEach(item => {
+                if (item.dataset.page === page) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+
+            // 触发页面切换动画
+            triggerPageTransition(page);
+        }
+
+        // 页面切换动画
+        function triggerPageTransition(page) {
+            const pageEl = document.getElementById('page-' + page);
+            pageEl.style.animation = 'none';
+            pageEl.offsetHeight; // 触发重绘
+            pageEl.style.animation = 'fadeIn 0.3s ease';
+        }
+
+        // 切换任务
+        function toggleTask(checkbox) {
+            const card = checkbox.closest('.task-card');
+
+            if (checkbox.classList.contains('checked')) {
+                checkbox.classList.remove('checked');
+                card.classList.remove('completed');
+            } else {
+                checkbox.classList.add('checked');
+                card.classList.add('completed');
+
+                // 触发庆祝动画
+                triggerCelebration();
+
+                // 显示通知
+                showNotification('任务完成啦！太棒了！', 'success');
+            }
+        }
+
+        // 筛选器
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+
+                // 触发筛选动画
+                const filter = this.dataset.filter;
+                filterTasks(filter);
+            });
+        });
+
+        // 筛选任务
+        function filterTasks(filter) {
+            const tasks = document.querySelectorAll('#page-all .task-card');
+            tasks.forEach(task => {
+                task.style.animation = 'none';
+                task.offsetHeight;
+                task.style.animation = 'fadeIn 0.3s ease';
+            });
+        }
+
+        // 领取奖励
+        function claimReward(btn, cost) {
+            btn.disabled = true;
+            btn.textContent = '已领取 🎉';
+            triggerCelebration();
+            showNotification('奖励已领取！享受吧！🎁', 'success');
+        }
+
+        // 开关切换
+        function toggleSwitch(el) {
+            el.classList.toggle('active');
+        }
+
+        // 庆祝动画
+        function triggerCelebration() {
+            const emojis = ['🌟', '✨', '💖', '🎀', '🌸', '🎈', '🎁', '💝'];
+
+            for (let i = 0; i < 12; i++) {
+                setTimeout(() => {
+                    const emoji = document.createElement('div');
+                    emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                    emoji.style.cssText = `
+                        position: fixed;
+                        top: 50%;
+                        left: 50%;
+                        font-size: 30px;
+                        pointer-events: none;
+                        z-index: 9999;
+                        animation: celebrate 1s ease-out forwards;
+                        --tx: ${(Math.random() - 0.5) * 300}px;
+                        --ty: ${(Math.random() - 0.5) * 300 - 200}px;
+                        --r: ${Math.random() * 720}deg;
+                    `;
+                    document.body.appendChild(emoji);
+
+                    setTimeout(() => emoji.remove(), 1000);
+                }, i * 50);
+            }
+        }
+
+        // 显示通知
+        function showNotification(message, type) {
+            const notification = document.querySelector('.notification');
+            notification.querySelector('.notification-text').textContent = message;
+            notification.classList.add('show');
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // 更新时间
+        function updateTime() {
+            const now = new Date();
+            const hours = 20 - now.getHours();
+            const minutes = 60 - now.getMinutes();
+            const seconds = 60 - now.getSeconds();
+            document.querySelector('.countdown-time').textContent =
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+    </script>
+</body>
+</html>

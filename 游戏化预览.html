@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>💖 游戏化版本预览</title>
+    <link rel="stylesheet" href="styles-mobile-v2.css">
+    <style>
+        /* 强制显示移动端样式 */
+        @media (min-width: 768px) {
+            body {
+                background: #f5f5f5;
+            }
+            .container {
+                max-width: 420px;
+                margin: 20px auto;
+                border-radius: 30px;
+                overflow: hidden;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            }
+            .bottom-nav {
+                display: flex !important;
+            }
+            .fab {
+                display: flex !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <header class="header">
+            <div class="welcome-text">
+                <h1 id="greeting">💖 你好呀！今天是美好的一天 💖</h1>
+                <p class="date-text" id="currentDate">2026年3月20日 星期五</p>
+                <div class="countdown-timer">
+                    <span class="countdown-emoji">⏰</span>
+                    <span class="countdown-time">05:44:15</span>
+                </div>
+            </div>
+
+            <!-- 成就 -->
+            <section class="achievements">
+                <div class="achievement-badge">
+                    <span class="badge-icon">🔥</span>
+                    <span class="badge-count">7</span>
+                    <span class="badge-label">连续打卡</span>
+                </div>
+                <div class="achievement-badge">
+                    <span class="badge-icon">✅</span>
+                    <span class="badge-count">23</span>
+                    <span class="badge-label">今日完成</span>
+                </div>
+                <div class="achievement-badge">
+                    <span class="badge-icon">⭐</span>
+                    <span class="badge-count">156</span>
+                    <span class="badge-label">总积分</span>
+                </div>
+            </section>
+        </header>
+
+        <!-- 快速添加 -->
+        <section class="quick-add">
+            <div class="add-card">
+                <h2>✨ 新任务 ✨</h2>
+                <div class="input-group">
+                    <input type="text" placeholder="今天要做什么呢？💭" id="taskTitle">
+                    <button class="add-btn" id="addBtn">➕</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 进度 -->
+        <section class="progress-section">
+            <div class="progress-card">
+                <div class="progress-header">
+                    <h3>今日进度</h3>
+                    <span class="progress-stats">23/30</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" style="width: 77%"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 任务列表 -->
+        <section class="tasks-section">
+            <h2 class="section-title">📋 今日任务</h2>
+
+            <div class="task-card priority-high">
+                <div class="task-header">
+                    <div class="task-checkbox" onclick="toggleTask(this)"></div>
+                    <div class="task-content">
+                        <div class="task-title">完成项目报告</div>
+                        <div class="task-meta">
+                            <span class="task-meta-item">🔴 紧急</span>
+                            <span class="task-meta-item">⏰ 18:00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="task-card priority-medium">
+                <div class="task-header">
+                    <div class="task-checkbox" onclick="toggleTask(this)"></div>
+                    <div class="task-content">
+                        <div class="task-title">学习新技能</div>
+                        <div class="task-meta">
+                            <span class="task-meta-item">🟡 中等</span>
+                            <span class="task-meta-item">⏰ 20:00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="task-card completed">
+                <div class="task-header">
+                    <div class="task-checkbox checked" onclick="toggleTask(this)"></div>
+                    <div class="task-content">
+                        <div class="task-title">晨间锻炼</div>
+                        <div class="task-meta">
+                            <span class="task-meta-item">✅ 已完成</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- 底部导航栏 -->
+    <nav class="bottom-nav">
+        <div class="nav-item active">
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">今日</span>
+        </div>
+        <div class="nav-item">
+            <span class="nav-icon">📝</span>
+            <span class="nav-label">全部</span>
+        </div>
+        <div class="nav-item">
+            <span class="nav-icon">🎁</span>
+            <span class="nav-label">奖励</span>
+        </div>
+        <div class="nav-item">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-label">设置</span>
+        </div>
+    </nav>
+
+    <!-- 悬浮按钮 -->
+    <button class="fab">➕</button>
+
+    <!-- 通知 -->
+    <div class="notification success">
+        <span class="notification-icon">🎉</span>
+        <span class="notification-text">任务完成啦！太棒了！</span>
+    </div>
+
+    <script>
+        // 切换任务
+        function toggleTask(checkbox) {
+            const card = checkbox.closest('.task-card');
+
+            if (checkbox.classList.contains('checked')) {
+                checkbox.classList.remove('checked');
+                card.classList.remove('completed');
+            } else {
+                checkbox.classList.add('checked');
+                card.classList.add('completed');
+
+                // 触发庆祝动画
+                triggerCelebration();
+
+                // 显示通知
+                showNotification('任务完成啦！太棒了！', 'success');
+            }
+        }
+
+        // 庆祝动画
+        function triggerCelebration() {
+            const emojis = ['🌟', '✨', '💖', '🎀', '🌸', '🎈', '🎁', '💝'];
+
+            for (let i = 0; i < 12; i++) {
+                setTimeout(() => {
+                    const emoji = document.createElement('div');
+                    emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                    emoji.style.cssText = `
+                        position: fixed;
+                        top: 50%;
+                        left: 50%;
+                        font-size: 30px;
+                        pointer-events: none;
+                        z-index: 9999;
+                        animation: celebrate 1s ease-out forwards;
+                        --tx: ${(Math.random() - 0.5) * 300}px;
+                        --ty: ${(Math.random() - 0.5) * 300 - 200}px;
+                        --r: ${Math.random() * 720}deg;
+                    `;
+                    document.body.appendChild(emoji);
+
+                    setTimeout(() => emoji.remove(), 1000);
+                }, i * 50);
+            }
+        }
+
+        // 显示通知
+        function showNotification(message, type) {
+            const notification = document.querySelector('.notification');
+            notification.querySelector('.notification-text').textContent = message;
+            notification.classList.add('show');
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // 更新时间
+        function updateTime() {
+            const now = new Date();
+            const hours = 20 - now.getHours();
+            const minutes = 60 - now.getMinutes();
+            const seconds = 60 - now.getSeconds();
+            document.querySelector('.countdown-time').textContent =
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+    </script>
+</body>
+</html>

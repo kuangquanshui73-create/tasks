@@ -224,7 +224,10 @@ class CuteTaskManager {
         if (bottomNav) {
             bottomNav.querySelectorAll('.nav-item').forEach(item => {
                 item.addEventListener('click', () => {
-                    this.switchMobileTab(item.dataset.tab);
+                    const page = item.dataset.page;
+                    if (page) {
+                        this.switchPage(page);
+                    }
                 });
             });
         }
@@ -1844,7 +1847,162 @@ class CloudSyncManager {
             }, 300);
         }
     }
+
+    // ===== 新增：页面切换 =====
+    switchPage(page) {
+        // 隐藏所有页面
+        const pages = document.querySelectorAll('.page');
+        pages.forEach(p => p.classList.remove('active'));
+
+        // 显示目标页面
+        const targetPage = document.getElementById('page-' + page);
+        if (targetPage) {
+            targetPage.classList.add('active');
+        }
+
+        // 更新导航栏状态
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => {
+            if (item.dataset.page === page) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+
+        // 根据页面执行不同操作
+        switch(page) {
+            case 'today':
+                this.renderTasks('today');
+                break;
+            case 'all':
+                this.renderTasks('all');
+                break;
+            case 'rewards':
+                this.renderRewards();
+                break;
+            case 'settings':
+                this.renderSettings();
+                break;
+        }
+    }
+
+    // ===== 新增：渲染奖励页面 =====
+    renderRewards() {
+        const rewards = [
+            { icon: '🎮', title: '游戏时间 1小时', cost: 30, desc: '完成今天的任务后，可以自由地玩游戏1小时！' },
+            { icon: '🍦', title: '冰淇淋一支', cost: 20, desc: '奖励自己一支美味的冰淇淋！' },
+            { icon: '📺', title: '追剧2小时', cost: 50, desc: '放松一下，追自己喜欢看的剧！' },
+            { icon: '🛍️', title: '购物50元', cost: 100, desc: '买自己喜欢的东西！' },
+            { icon: '✈️', title: '周末旅行', cost: 500, desc: '完成一个月的任务后，奖励自己一次周末旅行！' }
+        ];
+
+        const points = this.calculateTotalPoints();
+        const container = document.querySelector('#page-rewards section') || this.createRewardsContainer();
+
+        container.innerHTML = rewards.map(reward => {
+            const canClaim = points >= reward.cost;
+            return `
+                <div class="reward-card ${canClaim ? '' : 'locked'}">
+                    <div class="reward-header">
+                        <span class="reward-icon">${reward.icon}</span>
+                        <div>
+                            <div class="reward-title">${reward.title}</div>
+                            <div class="reward-cost">⭐ ${reward.cost}</div>
+                        </div>
+                    </div>
+                    <p class="reward-desc">${reward.desc}</p>
+                    ${canClaim ? `<button class="claim-btn" onclick="claimReward('${reward.title}', ${reward.cost})">领取奖励 🎁</button>` : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    createRewardsContainer() {
+        const container = document.createElement('section');
+        container.innerHTML = '<div class="rewards-list"></div>';
+        document.getElementById('page-rewards').appendChild(container);
+        return container;
+    }
+
+    // ===== 新增：计算总积分 =====
+    calculateTotalPoints() {
+        return this.tasks.reduce((total, task) => {
+            if (task.completed) {
+                return total + (task.priority === 'high' ? 10 : task.priority === 'medium' ? 5 : 3);
+            }
+            return total;
+        }, 0);
+    }
+
+    // ===== 新增：渲染设置页面 =====
+    renderSettings() {
+        // 更新云同步状态
+        const syncStatus = document.querySelector('.sync-status');
+        if (syncStatus) {
+            if (this.token) {
+                syncStatus.classList.remove('disconnected');
+                syncStatus.classList.add('connected');
+                syncStatus.querySelector('.sync-status-text').innerHTML =
+                    `<div>✅ 已连接到 Gitee</div><div style="font-size: 0.8em; opacity: 0.8;">上次同步：刚刚</div>`;
+            } else {
+                syncStatus.classList.remove('connected');
+                syncStatus.classList.add('disconnected');
+                syncStatus.querySelector('.sync-status-text').innerHTML =
+                    `<div>❌ 未连接</div><div style="font-size: 0.8em; opacity: 0.8;">请先登录 Gitee</div>`;
+            }
+        }
+    }
+
+    // ===== 新增：领取奖励 =====
+    claimReward(title, cost) {
+        const points = this.calculateTotalPoints();
+        if (points < cost) {
+            this.showNotification('积分不足！需要 ' + cost + ' 分', 'error');
+            return;
+        }
+
+        if (confirm(`确定要领取"${title}"吗？需要消耗 ${cost} 积分`)) {
+            // 扣除积分（这里简化处理，实际应该记录已领取的奖励）
+            this.triggerCelebration();
+            this.showNotification(`🎁 成功领取：${title}`, 'success');
+        }
+    }
+
+    // ===== 新增：增强的庆祝动画 =====
+    triggerCelebration() {
+        const emojis = ['🌟', '✨', '💖', '🎀', '🌸', '🎈', '🎁', '💝', '🎉', '🎊', '🌈', '⭐'];
+
+        for (let i = 0; i < 15; i++) {
+            setTimeout(() => {
+                const emoji = document.createElement('div');
+                emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                emoji.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    font-size: ${25 + Math.random() * 20}px;
+                    pointer-events: none;
+                    z-index: 9999;
+                    animation: celebrate 1.2s ease-out forwards;
+                    --tx: ${(Math.random() - 0.5) * 400}px;
+                    --ty: ${(Math.random() - 0.5) * 400 - 200}px;
+                    --r: ${Math.random() * 720}deg;
+                `;
+                document.body.appendChild(emoji);
+
+                setTimeout(() => emoji.remove(), 1200);
+            }, i * 40);
+        }
+    }
 }
+
+// 全局函数：领取奖励
+window.claimReward = function(title, cost) {
+    if (window.taskManager) {
+        window.taskManager.claimReward(title, cost);
+    }
+};
 
 // 初始化
 let taskManager;
