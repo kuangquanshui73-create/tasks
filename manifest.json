@@ -1,0 +1,10 @@
+{
+  "name": "小可爱任务本",
+  "short_name": "任务本",
+  "description": "可爱的个人任务管理系统",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#FF6B9D",
+  "theme_color": "#FF6B9D",
+  "icons": []
+}

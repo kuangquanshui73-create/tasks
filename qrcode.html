@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📱 手机访问指南 · 小可爱任务本</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(160deg, #667EEA 0%, #764BA2 100%);
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 30px 16px 40px;
+    }
+
+    .container {
+      max-width: 560px;
+      width: 100%;
+    }
+
+    /* 标题 */
+    .hero {
+      text-align: center;
+      color: white;
+      margin-bottom: 28px;
+    }
+    .hero-icon { font-size: 3.5rem; line-height: 1; }
+    .hero h1 {
+      font-size: 1.7rem;
+      font-weight: 800;
+      margin: 10px 0 6px;
+    }
+    .hero p {
+      font-size: 0.95rem;
+      opacity: 0.85;
+    }
+
+    /* 卡片通用 */
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 24px 22px;
+      margin-bottom: 18px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    }
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #764BA2;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* IP地址显示框 */
+    .ip-display {
+      background: linear-gradient(135deg, #667EEA, #764BA2);
+      border-radius: 14px;
+      padding: 20px;
+      text-align: center;
+      color: white;
+      margin-bottom: 16px;
+    }
+    .ip-label {
+      font-size: 0.82rem;
+      opacity: 0.85;
+      margin-bottom: 8px;
+    }
+    .ip-url {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      word-break: break-all;
+    }
+    .ip-sub {
+      font-size: 0.78rem;
+      opacity: 0.8;
+      margin-top: 6px;
+    }
+
+    /* 步骤列表 */
+    .steps { list-style: none; }
+    .step-item {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid #F5F5F5;
+    }
+    .step-item:last-child { border-bottom: none; }
+    .step-num {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667EEA, #764BA2);
+      color: white;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .step-content { flex: 1; }
+    .step-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 3px;
+    }
+    .step-desc {
+      font-size: 0.85rem;
+      color: #777;
+      line-height: 1.5;
+    }
+
+    /* 命令代码块 */
+    .cmd-block {
+      background: #1E1E2E;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin: 10px 0;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 0.88rem;
+      color: #A6E3A1;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .cmd-comment { color: #6C7086; }
+    .cmd-keyword { color: #89B4FA; }
+
+    /* 提示卡 */
+    .tip-card {
+      background: #F8F4FF;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-top: 6px;
+    }
+    .tip-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 8px;
+      font-size: 0.88rem;
+      color: #555;
+      line-height: 1.5;
+    }
+    .tip-row:last-child { margin-bottom: 0; }
+    .tip-icon { flex-shrink: 0; font-size: 1rem; }
+
+    /* 直接访问按钮 */
+    .local-btn {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #667EEA, #764BA2);
+      color: white;
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      margin-bottom: 10px;
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+      transition: transform 0.15s;
+    }
+    .local-btn:hover { transform: translateY(-2px); }
+    .local-btn.secondary {
+      background: white;
+      color: #764BA2;
+      border: 2px solid #764BA2;
+      box-shadow: none;
+    }
+
+    /* 响应式 */
+    @media (max-width: 400px) {
+      .ip-url { font-size: 1.15rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- 标题 -->
+  <div class="hero">
+    <div class="hero-icon">📱</div>
+    <h1>手机访问指南</h1>
+    <p>让手机也能随时打开小可爱任务本</p>
+  </div>
+
+  <!-- 访问地址提示 -->
+  <div class="card">
+    <div class="card-title">🌐 在手机浏览器输入这个地址</div>
+    <div class="ip-display">
+      <div class="ip-label">局域网访问地址（示例）</div>
+      <div class="ip-url">http://192.168.x.x/index.html</div>
+      <div class="ip-sub">把 192.168.x.x 替换成你电脑的真实 IP</div>
+    </div>
+    <div class="tip-card">
+      <div class="tip-row">
+        <span class="tip-icon">💡</span>
+        <span>手机和电脑必须连接<strong>同一个 WiFi</strong>，才能通过局域网互访。</span>
+      </div>
+      <div class="tip-row">
+        <span class="tip-icon">📂</span>
+        <span>直接双击打开 HTML 文件只能在本机用，不能跨设备。手机访问需要搭建一个简易 HTTP 服务。</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 查找本机IP步骤 -->
+  <div class="card">
+    <div class="card-title">🔍 第一步：查找本机 IP 地址</div>
+    <ul class="steps">
+      <li class="step-item">
+        <span class="step-num">1</span>
+        <div class="step-content">
+          <div class="step-title">按 Win + R，打开运行窗口</div>
+          <div class="step-desc">同时按住键盘上的 Windows 键和 R 键</div>
+        </div>
+      </li>
+      <li class="step-item">
+        <span class="step-num">2</span>
+        <div class="step-content">
+          <div class="step-title">输入 cmd，按回车</div>
+          <div class="step-desc">打开命令提示符（黑色窗口）</div>
+        </div>
+      </li>
+      <li class="step-item">
+        <span class="step-num">3</span>
+        <div class="step-content">
+          <div class="step-title">在黑色窗口中输入以下命令</div>
+          <div class="cmd-block"><span class="cmd-keyword">ipconfig</span></div>
+          <div class="step-desc">找到「以太网适配器」或「无线局域网适配器 WLAN」下的 <strong>IPv4 地址</strong>，通常以 192.168 开头</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- 启动简易服务器 -->
+  <div class="card">
+    <div class="card-title">🚀 第二步：启动简易 HTTP 服务器</div>
+    <ul class="steps">
+      <li class="step-item">
+        <span class="step-num">A</span>
+        <div class="step-content">
+          <div class="step-title">方法一：用 Python（推荐）</div>
+          <div class="step-desc">如果电脑装了 Python，在任务本文件夹空白处按住 Shift + 右键，选「在此处打开命令行」，输入：</div>
+          <div class="cmd-block">
+            <span class="cmd-comment"># Python 3</span><br>
+            <span class="cmd-keyword">python</span> -m http.server <span class="cmd-keyword">8080</span>
+          </div>
+          <div class="step-desc">然后手机访问：<strong>http://你的IP:8080/index.html</strong></div>
+        </div>
+      </li>
+      <li class="step-item">
+        <span class="step-num">B</span>
+        <div class="step-content">
+          <div class="step-title">方法二：用 Node.js</div>
+          <div class="cmd-block">
+            <span class="cmd-keyword">npx</span> serve -p 8080 D:\工作安排管理系统
+          </div>
+          <div class="step-desc">然后手机访问：<strong>http://你的IP:8080</strong></div>
+        </div>
+      </li>
+      <li class="step-item">
+        <span class="step-num">C</span>
+        <div class="step-content">
+          <div class="step-title">方法三：用 VS Code Live Server 插件</div>
+          <div class="step-desc">安装 Live Server 扩展 → 右键 index.html → 选「Open with Live Server」→ 手机访问提示的局域网地址</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- 手机添加到主屏幕 -->
+  <div class="card">
+    <div class="card-title">📲 第三步：添加到手机主屏幕</div>
+    <ul class="steps">
+      <li class="step-item">
+        <span class="step-num">iOS</span>
+        <div class="step-content">
+          <div class="step-title">Safari 浏览器打开页面</div>
+          <div class="step-desc">点底部「分享」按钮 → 选「添加到主屏幕」→ 像 App 一样从桌面打开 🎉</div>
+        </div>
+      </li>
+      <li class="step-item">
+        <span class="step-num">安卓</span>
+        <div class="step-content">
+          <div class="step-title">Chrome 浏览器打开页面</div>
+          <div class="step-desc">点右上角三个点菜单 → 选「添加到主屏幕」或「安装应用」→ 桌面出现图标</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- 按钮区 -->
+  <a href="index.html" class="local-btn">🏠 在本机打开任务本</a>
+  <a href="daily-brief.html" class="local-btn secondary">☀️ 打开每日早报</a>
+
+</div>
+
+</body>
+</html>
