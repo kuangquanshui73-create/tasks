@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Gitee API 测试工具</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 900px; margin: 0 auto; }
+        .test-step { margin: 15px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .step-title { font-weight: bold; font-size: 16px; margin-bottom: 10px; }
+        .result { margin-top: 10px; padding: 10px; border-radius: 5px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; font-size: 12px; max-height: 300px; }
+        button { padding: 10px 20px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 5px; margin: 5px; }
+        button:hover { background: #45a049; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Gitee API 自动化测试工具</h1>
+    <p>Token: a00af272eb277e9e3c980d45c321e6be</p>
+    <p>用户名: kuangquanshui73</p>
+    <p>仓库: cute-tasks-backup</p>
+
+    <button onclick="runAllTests()">🚀 运行全部测试</button>
+    <div id="results"></div>
+
+    <script>
+        const token = 'a00af272eb277e9e3c980d45c321e6be';
+        const owner = 'kuangquanshui73';
+        const repo = 'cute-tasks-backup';
+
+        function addStep(title) {
+            const div = document.createElement('div');
+            div.className = 'test-step';
+            div.innerHTML = `<div class="step-title">${title}</div>`;
+            div.id = `step-${title.replace(/\s/g, '-')}`;
+            document.getElementById('results').appendChild(div);
+            return div;
+        }
+
+        function addResult(stepDiv, content, type) {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = `<pre>${typeof content === 'object' ? JSON.stringify(content, null, 2) : content}</pre>`;
+            stepDiv.appendChild(resultDiv);
+        }
+
+        async function runAllTests() {
+            document.getElementById('results').innerHTML = '';
+
+            // 测试 1: 验证 Token
+            const step1 = addStep('1. 验证 Token');
+            try {
+                const res = await fetch('https://gitee.com/api/v5/user', {
+                    headers: { 'Authorization': `token ${token}` }
+                });
+                const data = await res.json();
+                addResult(step1, data, res.ok ? 'success' : 'error');
+                if (!res.ok) return;
+            } catch (e) {
+                addResult(step1, e.message, 'error');
+                return;
+            }
+
+            // 测试 2: 检查仓库
+            const step2 = addStep('2. 检查仓库');
+            try {
+                const res = await fetch(`https://gitee.com/api/v5/repos/${owner}/${repo}`, {
+                    headers: { 'Authorization': `token ${token}` }
+                });
+                const data = await res.json();
+                addResult(step2, data, res.ok ? 'success' : 'error');
+                addResult(step2, `仓库所有者: ${data.owner ? data.owner.login : '未知'}`, 'info');
+                addResult(step2, `当前用户: ${owner}`, 'info');
+                addResult(step2, `是否是仓库所有者: ${data.owner && data.owner.login === owner}`, 'info');
+
+                if (!res.ok) {
+                    // 尝试创建新仓库
+                    addResult(step2, '尝试创建新仓库...', 'info');
+                    try {
+                        const createRes = await fetch('https://gitee.com/api/v5/user/repos', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `token ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                name: 'cute-tasks-backup-test',
+                                description: '测试任务备份',
+                                private: false,
+                                auto_init: true
+                            })
+                        });
+                        const createData = await createRes.json();
+                        if (createRes.ok) {
+                            addResult(step2, '新仓库创建成功: cute-tasks-backup-test', 'success');
+                        } else {
+                            addResult(step2, '新仓库创建失败', 'error');
+                            addResult(step2, JSON.stringify(createData, null, 2), 'error');
+                        }
+                    } catch (e) {
+                        addResult(step2, e.message, 'error');
+                    }
+                    return;
+                }
+            } catch (e) {
+                addResult(step2, e.message, 'error');
+                return;
+            }
+
+            // 测试 3: 获取文件（检查是否存在）
+            const step3 = addStep('3. 检查 tasks.json 文件');
+            let sha = null;
+            try {
+                const res = await fetch(`https://gitee.com/api/v5/repos/${owner}/${repo}/contents/tasks.json`, {
+                    headers: { 'Authorization': `token ${token}` }
+                });
+                const data = await res.json();
+                addResult(step3, data, res.ok ? 'info' : 'error');
+
+                // 解析 SHA
+                if (res.ok && Array.isArray(data)) {
+                    if (data.length > 0 && data[0].sha) {
+                        sha = data[0].sha;
+                        addResult(step3, `文件存在，SHA: ${sha}`, 'success');
+                    } else {
+                        addResult(step3, '文件不存在（返回空数组）', 'info');
+                    }
+                } else if (res.ok && data.sha) {
+                    sha = data.sha;
+                    addResult(step3, `文件存在，SHA: ${sha}`, 'success');
+                }
+            } catch (e) {
+                addResult(step3, e.message, 'error');
+            }
+
+            // 测试 4: 创建或更新文件
+            const step4 = addStep('4. 创建/更新 tasks.json');
+            try {
+                const syncData = {
+                    tasks: [
+                        {id: Date.now(), title: '自动化测试任务', completed: false}
+                    ],
+                    userData: {totalStars: 0, streakDays: 0, totalCompleted: 0},
+                    lastUpdated: new Date().toISOString()
+                };
+
+                const content = btoa(unescape(encodeURIComponent(JSON.stringify(syncData, null, 2))));
+
+                // Gitee API: 创建新文件用 POST，更新用 PUT
+                const body = {
+                    content: content,
+                    message: `测试同步 - ${new Date().toLocaleString('zh-CN')}`,
+                    branch: 'master'
+                };
+                if (sha) {
+                    body.sha = sha;
+                }
+
+                addResult(step4, `请求体: ${JSON.stringify(body, null, 2)}`, 'info');
+                addResult(step4, `是否更新: ${!!sha}`, 'info');
+
+                // 创建新文件用 POST，更新用 PUT
+                const method = sha ? 'PUT' : 'POST';
+                addResult(step4, `使用 HTTP 方法: ${method}`, 'info');
+
+                const res = await fetch(`https://gitee.com/api/v5/repos/${owner}/${repo}/contents/tasks.json`, {
+                    method: method,
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    addResult(step4, `✅ 成功！\n${JSON.stringify(data, null, 2)}`, 'success');
+                    addResult(step4, '🎉 同步功能已打通！现在可以在手机上使用了！', 'success');
+                } else {
+                    addResult(step4, `❌ 失败\n${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (e) {
+                addResult(step4, `异常: ${e.message}\n${e.stack}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

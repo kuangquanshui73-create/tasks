@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>同步诊断工具</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 1000px; margin: 0 auto; }
+        h1 { color: #333; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .section-title { font-weight: bold; font-size: 18px; margin-bottom: 10px; color: #0066cc; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; font-size: 14px; }
+        .success { background: #d4edda; border-left: 4px solid #28a745; }
+        .error { background: #f8d7da; border-left: 4px solid #dc3545; }
+        .warning { background: #fff3cd; border-left: 4px solid #ffc107; }
+        .info { background: #d1ecf1; border-left: 4px solid #17a2b8; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 3px; overflow-x: auto; font-size: 12px; max-height: 400px; }
+        button { padding: 10px 20px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; margin: 5px; }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 任务同步全面诊断工具</h1>
+    
+    <div class="section">
+        <div class="section-title">第1步：检查本地数据</div>
+        <button onclick="checkLocalData()">检查本地数据</button>
+        <div id="localDataResult"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">第2步：检查 Gitee 配置</div>
+        <button onclick="checkGiteeConfig()">检查配置</button>
+        <div id="configResult"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">第3步：验证 Token 有效性</div>
+        <button onclick="validateToken()">验证 Token</button>
+        <div id="tokenResult"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">第4步：检查仓库</div>
+        <button onclick="checkRepo()">检查仓库</button>
+        <div id="repoResult"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">第5步：检查云端文件</div>
+        <button onclick="checkCloudFile()">检查云端文件</button>
+        <div id="cloudFileResult"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">第6步：测试上传同步</div>
+        <button onclick="testUpload()">测试上传</button>
+        <div id="uploadResult"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">第7步：测试下载同步</div>
+        <button onclick="testDownload()">测试下载</button>
+        <div id="downloadResult"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">第8步：对比本地和云端数据</div>
+        <button onclick="compareData()">对比数据</button>
+        <div id="compareResult"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">🚀 运行全部诊断</div>
+        <button onclick="runAllDiagnostics()" style="background: #28a745; font-size: 16px; padding: 15px 30px;">
+            运行完整诊断流程
+        </button>
+        <div id="allResults"></div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            token: localStorage.getItem('giteeToken'),
+            owner: localStorage.getItem('giteeOwner'),
+            username: localStorage.getItem('giteeUsername'),
+            repo: 'cute-tasks-backup',
+            branch: 'master',
+            filePath: 'tasks.json'
+        };
+
+        function addResult(containerId, content, type) {
+            const container = document.getElementById(containerId);
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${type}`;
+            
+            if (typeof content === 'object') {
+                resultDiv.innerHTML = `<pre>${JSON.stringify(content, null, 2)}</pre>`;
+            } else {
+                resultDiv.innerHTML = content;
+            }
+            
+            container.appendChild(resultDiv);
+            return resultDiv;
+        }
+
+        function clearResult(containerId) {
+            document.getElementById(containerId).innerHTML = '';
+        }
+
+        async function checkLocalData() {
+            clearResult('localDataResult');
+            
+            try {
+                const tasks = JSON.parse(localStorage.getItem('cuteTasks')) || [];
+                const userData = JSON.parse(localStorage.getItem('cuteUserData')) || {};
+                
+                addResult('localDataResult', `✅ 本地任务数: ${tasks.length}`, 'success');
+                addResult('localDataResult', `✅ 用户数据: 总星星=${userData.totalStars || 0}, 总完成=${userData.totalCompleted || 0}`, 'success');
+                
+                if (tasks.length > 0) {
+                    addResult('localDataResult', `📋 前3个任务:`, 'info');
+                    tasks.slice(0, 3).forEach(task => {
+                        addResult('localDataResult', `  - ${task.title} (${task.completed ? '已完成' : '未完成'})`, 'info');
+                    });
+                }
+                
+                return { tasks, userData };
+            } catch (error) {
+                addResult('localDataResult', `❌ 错误: ${error.message}`, 'error');
+                return null;
+            }
+        }
+
+        async function checkGiteeConfig() {
+            clearResult('configResult');
+            
+            addResult('configResult', `Token: ${CONFIG.token ? '✅ 已配置' : '❌ 未配置'}`, CONFIG.token ? 'success' : 'error');
+            addResult('configResult', `用户名: ${CONFIG.username || '❌ 未配置'}`, CONFIG.username ? 'success' : 'error');
+            addResult('configResult', `仓库所有者: ${CONFIG.owner || '❌ 未配置'}`, CONFIG.owner ? 'success' : 'error');
+            addResult('configResult', `仓库名: ${CONFIG.repo}`, 'info');
+            addResult('configResult', `分支: ${CONFIG.branch}`, 'info');
+            addResult('configResult', `文件路径: ${CONFIG.filePath}`, 'info');
+            
+            if (!CONFIG.token || !CONFIG.owner) {
+                addResult('configResult', '⚠️ 缺少必要的配置信息', 'warning');
+            }
+        }
+
+        async function validateToken() {
+            clearResult('tokenResult');
+            
+            if (!CONFIG.token) {
+                addResult('tokenResult', '❌ 未找到 Token', 'error');
+                return false;
+            }
+            
+            try {
+                const response = await fetch('https://gitee.com/api/v5/user', {
+                    headers: { 'Authorization': `token ${CONFIG.token}` }
+                });
+                
+                if (response.ok) {
+                    const user = await response.json();
+                    addResult('tokenResult', `✅ Token 有效`, 'success');
+                    addResult('tokenResult', `用户名: ${user.login}`, 'info');
+                    addResult('tokenResult', `昵称: ${user.name || user.login}`, 'info');
+                    addResult('tokenResult', `完整信息:`, user);
+                    return true;
+                } else {
+                    addResult('tokenResult', `❌ Token 无效 (HTTP ${response.status})`, 'error');
+                    const errorText = await response.text();
+                    addResult('tokenResult', errorText, 'error');
+                    return false;
+                }
+            } catch (error) {
+                addResult('tokenResult', `❌ 请求失败: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function checkRepo() {
+            clearResult('repoResult');
+            
+            if (!CONFIG.owner) {
+                addResult('repoResult', '❌ 未配置仓库所有者', 'error');
+                return false;
+            }
+            
+            try {
+                const response = await fetch(
+                    `https://gitee.com/api/v5/repos/${CONFIG.owner}/${CONFIG.repo}`,
+                    { headers: { 'Authorization': `token ${CONFIG.token}` } }
+                );
+                
+                if (response.ok) {
+                    const repoInfo = await response.json();
+                    addResult('repoResult', `✅ 仓库存在`, 'success');
+                    addResult('repoResult', `仓库名: ${repoInfo.name}`, 'info');
+                    addResult('repoResult', `描述: ${repoInfo.description}`, 'info');
+                    addResult('repoResult', `默认分支: ${repoInfo.default_branch}`, 'info');
+                    addResult('repoResult', `私有仓库: ${repoInfo.private ? '是' : '否'}`, 'info');
+                    
+                    // 检查默认分支是否与配置一致
+                    if (repoInfo.default_branch !== CONFIG.branch) {
+                        addResult('repoResult', `⚠️ 警告: 仓库默认分支是 ${repoInfo.default_branch}, 但配置使用的是 ${CONFIG.branch}`, 'warning');
+                    }
+                    
+                    return true;
+                } else {
+                    addResult('repoResult', `❌ 仓库不存在或无权限 (HTTP ${response.status})`, 'error');
+                    return false;
+                }
+            } catch (error) {
+                addResult('repoResult', `❌ 请求失败: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function checkCloudFile() {
+            clearResult('cloudFileResult');
+            
+            try {
+                const response = await fetch(
+                    `https://gitee.com/api/v5/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.filePath}?ref=${CONFIG.branch}`,
+                    { headers: { 'Authorization': `token ${CONFIG.token}` } }
+                );
+                
+                if (response.ok) {
+                    const fileInfo = await response.json();
+                    
+                    // 处理数组或对象
+                    let fileData = null;
+                    if (Array.isArray(fileInfo)) {
+                        if (fileInfo.length > 0) {
+                            fileData = fileInfo[0];
+                        }
+                    } else {
+                        fileData = fileInfo;
+                    }
+                    
+                    if (fileData) {
+                        addResult('cloudFileResult', `✅ 云端文件存在`, 'success');
+                        addResult('cloudFileResult', `文件 SHA: ${fileData.sha}`, 'info');
+                        addResult('cloudFileResult', `文件大小: ${fileData.size} 字节`, 'info');
+                        addResult('cloudFileResult', `最后更新: ${new Date(fileData.date).toLocaleString('zh-CN')}`, 'info');
+                        
+                        // 尝试解析内容
+                        try {
+                            const contentStr = decodeURIComponent(escape(atob(fileData.content)));
+                            const data = JSON.parse(contentStr);
+                            addResult('cloudFileResult', `✅ 云端任务数: ${data.tasks ? data.tasks.length : 0}`, 'success');
+                            addResult('cloudFileResult', `✅ 云端星星数: ${data.userData ? data.userData.totalStars || 0 : 0}`, 'success');
+                            addResult('cloudFileResult', `最后更新时间: ${data.lastUpdated || '未知'}`, 'info');
+                            return { fileData, data };
+                        } catch (e) {
+                            addResult('cloudFileResult', `⚠️ 文件内容解析失败: ${e.message}`, 'warning');
+                        }
+                    } else {
+                        addResult('cloudFileResult', `ℹ️ 云端文件不存在 (这是正常的,首次使用时会创建)`, 'info');
+                    }
+                } else if (response.status === 404) {
+                    addResult('cloudFileResult', `ℹ️ 云端文件不存在 (这是正常的,首次使用时会创建)`, 'info');
+                } else {
+                    addResult('cloudFileResult', `❌ 检查文件失败 (HTTP ${response.status})`, 'error');
+                }
+                
+                return null;
+            } catch (error) {
+                addResult('cloudFileResult', `❌ 请求失败: ${error.message}`, 'error');
+                return null;
+            }
+        }
+
+        async function testUpload() {
+            clearResult('uploadResult');
+            
+            addResult('uploadResult', '🔄 准备测试上传...', 'info');
+            
+            const localData = await checkLocalData();
+            if (!localData) {
+                addResult('uploadResult', '❌ 无法获取本地数据', 'error');
+                return false;
+            }
+            
+            try {
+                // 1. 先获取文件 SHA
+                addResult('uploadResult', '📥 获取云端文件信息...', 'info');
+                const getResponse = await fetch(
+                    `https://gitee.com/api/v5/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.filePath}?ref=${CONFIG.branch}`,
+                    { headers: { 'Authorization': `token ${CONFIG.token}` } }
+                );
+                
+                let sha = null;
+                if (getResponse.ok) {
+                    const fileInfo = await getResponse.json();
+                    if (Array.isArray(fileInfo)) {
+                        if (fileInfo.length > 0 && fileInfo[0].sha) {
+                            sha = fileInfo[0].sha;
+                        }
+                    } else if (fileInfo.sha) {
+                        sha = fileInfo.sha;
+                    }
+                    addResult('uploadResult', `✅ 获取 SHA 成功: ${sha || '无 (新文件)'}`, 'success');
+                } else if (getResponse.status !== 404) {
+                    addResult('uploadResult', `⚠️ 获取文件信息失败: HTTP ${getResponse.status}`, 'warning');
+                }
+                
+                // 2. 上传数据
+                addResult('uploadResult', '📤 上传数据到云端...', 'info');
+                
+                const data = {
+                    tasks: localData.tasks,
+                    userData: localData.userData,
+                    lastUpdated: new Date().toISOString()
+                };
+                const content = JSON.stringify(data, null, 2);
+                
+                const method = sha ? 'PUT' : 'POST';
+                const body = {
+                    content: btoa(unescape(encodeURIComponent(content))),
+                    message: `测试上传 - ${new Date().toLocaleString('zh-CN')}`,
+                    branch: CONFIG.branch
+                };
+                if (sha) {
+                    body.sha = sha;
+                }
+                
+                addResult('uploadResult', `使用方法: ${method}`, 'info');
+                
+                const uploadResponse = await fetch(
+                    `https://gitee.com/api/v5/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.filePath}`,
+                    {
+                        method: method,
+                        headers: {
+                            'Authorization': `token ${CONFIG.token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(body)
+                    }
+                );
+                
+                if (uploadResponse.ok) {
+                    const result = await uploadResponse.json();
+                    addResult('uploadResult', `✅ 上传成功!`, 'success');
+                    addResult('uploadResult', `新文件 SHA: ${result.content.sha}`, 'info');
+                    return true;
+                } else {
+                    const error = await uploadResponse.json();
+                    addResult('uploadResult', `❌ 上传失败:`, 'error');
+                    addResult('uploadResult', error, 'error');
+                    return false;
+                }
+            } catch (error) {
+                addResult('uploadResult', `❌ 上传异常: ${error.message}`, 'error');
+                console.error(error);
+                return false;
+            }
+        }
+
+        async function testDownload() {
+            clearResult('downloadResult');
+            
+            addResult('downloadResult', '🔄 准备测试下载...', 'info');
+            
+            try {
+                const response = await fetch(
+                    `https://gitee.com/api/v5/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.filePath}?ref=${CONFIG.branch}`,
+                    { headers: { 'Authorization': `token ${CONFIG.token}` } }
+                );
+                
+                if (!response.ok) {
+                    addResult('downloadResult', `❌ 下载失败: HTTP ${response.status}`, 'error');
+                    return false;
+                }
+                
+                const fileInfo = await response.json();
+                
+                // 处理数组或对象
+                let contentStr = null;
+                if (Array.isArray(fileInfo)) {
+                    if (fileInfo.length > 0 && fileInfo[0].content) {
+                        contentStr = decodeURIComponent(escape(atob(fileInfo[0].content)));
+                    }
+                } else if (fileInfo.content) {
+                    contentStr = decodeURIComponent(escape(atob(fileInfo.content)));
+                }
+                
+                if (!contentStr) {
+                    addResult('downloadResult', '❌ 文件内容为空', 'error');
+                    return false;
+                }
+                
+                const data = JSON.parse(contentStr);
+                addResult('downloadResult', `✅ 下载成功!`, 'success');
+                addResult('downloadResult', `云端任务数: ${data.tasks ? data.tasks.length : 0}`, 'info');
+                addResult('downloadResult', `云端星星数: ${data.userData ? data.userData.totalStars || 0 : 0}`, 'info');
+                
+                if (data.tasks && data.tasks.length > 0) {
+                    addResult('downloadResult', `📋 前3个云端任务:`, 'info');
+                    data.tasks.slice(0, 3).forEach(task => {
+                        addResult('downloadResult', `  - ${task.title} (${task.completed ? '已完成' : '未完成'})`, 'info');
+                    });
+                }
+                
+                return data;
+            } catch (error) {
+                addResult('downloadResult', `❌ 下载异常: ${error.message}`, 'error');
+                console.error(error);
+                return false;
+            }
+        }
+
+        async function compareData() {
+            clearResult('compareResult');
+            
+            const localDataStr = localStorage.getItem('cuteTasks');
+            const localUserDataStr = localStorage.getItem('cuteUserData');
+            
+            addResult('compareResult', '📊 对比本地和云端数据...', 'info');
+            
+            try {
+                // 获取云端数据
+                const response = await fetch(
+                    `https://gitee.com/api/v5/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.filePath}?ref=${CONFIG.branch}`,
+                    { headers: { 'Authorization': `token ${CONFIG.token}` } }
+                );
+                
+                if (!response.ok) {
+                    addResult('compareResult', `⚠️ 无法获取云端数据进行对比: HTTP ${response.status}`, 'warning');
+                    return;
+                }
+                
+                const fileInfo = await response.json();
+                let cloudContentStr = null;
+                if (Array.isArray(fileInfo)) {
+                    if (fileInfo.length > 0 && fileInfo[0].content) {
+                        cloudContentStr = decodeURIComponent(escape(atob(fileInfo[0].content)));
+                    }
+                } else if (fileInfo.content) {
+                    cloudContentStr = decodeURIComponent(escape(atob(fileInfo.content)));
+                }
+                
+                if (!cloudContentStr) {
+                    addResult('compareResult', '❌ 云端数据为空', 'error');
+                    return;
+                }
+                
+                const cloudData = JSON.parse(cloudContentStr);
+                const localTasks = JSON.parse(localDataStr || '[]');
+                const localUserData = JSON.parse(localUserDataStr || '{}');
+                
+                // 对比任务数
+                addResult('compareResult', `本地任务: ${localTasks.length} 个 | 云端任务: ${cloudData.tasks ? cloudData.tasks.length : 0} 个`, 
+                    localTasks.length === (cloudData.tasks?.length || 0) ? 'success' : 'warning');
+                
+                // 对比星星数
+                const localStars = localUserData.totalStars || 0;
+                const cloudStars = cloudData.userData?.totalStars || 0;
+                addResult('compareResult', `本地星星: ${localStars} | 云端星星: ${cloudStars}`, 
+                    localStars === cloudStars ? 'success' : 'warning');
+                
+                // 检查差异
+                if (localTasks.length !== (cloudData.tasks?.length || 0)) {
+                    addResult('compareResult', '⚠️ 检测到任务数量不一致,可能存在同步问题', 'warning');
+                    addResult('compareResult', '建议: 点击"立即同步"按钮进行手动同步', 'info');
+                }
+                
+                if (localStars !== cloudStars) {
+                    addResult('compareResult', '⚠️ 检测到星星数量不一致', 'warning');
+                }
+                
+            } catch (error) {
+                addResult('compareResult', `❌ 对比失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function runAllDiagnostics() {
+            clearResult('allResults');
+            addResult('allResults', '🚀 开始完整诊断流程...', 'info');
+            
+            const steps = [
+                { name: '检查本地数据', fn: checkLocalData },
+                { name: '检查配置', fn: checkGiteeConfig },
+                { name: '验证 Token', fn: validateToken },
+                { name: '检查仓库', fn: checkRepo },
+                { name: '检查云端文件', fn: checkCloudFile },
+                { name: '对比数据', fn: compareData }
+            ];
+            
+            for (const step of steps) {
+                await step.fn();
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            addResult('allResults', '🎉 诊断完成!请查看上面的详细信息', 'success');
+        }
+
+        // 页面加载时自动显示配置
+        window.onload = function() {
+            checkGiteeConfig();
+        };
+    </script>
+</body>
+</html>

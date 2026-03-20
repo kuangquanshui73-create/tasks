@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>同步问题排查工具</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 900px; margin: 0 auto; }
+        h1 { color: #d32f2f; }
+        .step { margin: 15px 0; padding: 15px; border: 2px solid #ddd; border-radius: 8px; }
+        .step-title { font-weight: bold; font-size: 18px; margin-bottom: 10px; color: #1976d2; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; font-size: 14px; }
+        .success { background: #d4edda; border-left: 4px solid #28a745; }
+        .error { background: #f8d7da; border-left: 4px solid #dc3545; }
+        .warning { background: #fff3cd; border-left: 4px solid #ffc107; }
+        .info { background: #d1ecf1; border-left: 4px solid #17a2b8; }
+        button { padding: 15px 30px; cursor: pointer; background: #2196F3; color: white; border: none; border-radius: 5px; font-size: 16px; margin: 5px; }
+        button:hover { background: #1976D2; }
+        .big-btn { font-size: 20px; padding: 20px 40px; background: #4CAF50; }
+        .big-btn:hover { background: #388E3C; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 3px; overflow-x: auto; font-size: 12px; }
+        .highlight { color: #d32f2f; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>🔧 同步问题深度排查工具</h1>
+    
+    <div class="step">
+        <div class="step-title">第1步：检查浏览器缓存</div>
+        <p class="highlight">⚠️ 如果你刚才刷新了页面，但还没有强制刷新（Ctrl+F5），浏览器可能还在使用旧代码！</p>
+        
+        <button onclick="checkCache()">检查当前代码版本</button>
+        <div id="cacheResult"></div>
+        
+        <p><strong>如何强制刷新：</strong></p>
+        <ul>
+            <li>Windows: 按 <kbd>Ctrl + F5</kbd></li>
+            <li>Mac: 按 <kbd>Cmd + Shift + R</kbd></li>
+            <li>或者：<a href="D:\工作安排管理系统\index.html" target="_blank">在新标签页打开（无缓存）</a></li>
+        </ul>
+    </div>
+
+    <div class="step">
+        <div class="step-title">第2步：检查 localStorage 配置</div>
+        <button onclick="checkLocalStorage()">检查本地存储</button>
+        <div id="localStorageResult"></div>
+    </div>
+
+    <div class="step">
+        <div class="step-title">第3步：检查云端数据</div>
+        <button onclick="checkCloudData()">检查云端实际数据</button>
+        <div id="cloudResult"></div>
+    </div>
+
+    <div class="step">
+        <div class="step-title">第4步：测试同步按钮</div>
+        <p>尝试手动点击同步按钮，看是否有反应：</p>
+        <button onclick="testSyncButton()" class="big-btn">🔄 测试"立即同步"按钮</button>
+        <div id="syncButtonResult"></div>
+    </div>
+
+    <div class="step">
+        <div class="step-title">第5步：检查浏览器控制台错误</div>
+        <p>请按 <kbd>F12</kbd> 打开浏览器控制台，然后点击下面的按钮：</p>
+        <button onclick="checkConsoleErrors()">检查控制台</button>
+        <div id="consoleResult"></div>
+    </div>
+
+    <div class="step">
+        <div class="step-title">🚀 完整排查</div>
+        <button onclick="runFullCheck()" class="big-btn">运行完整检查</button>
+        <div id="fullCheckResult"></div>
+    </div>
+
+    <div class="step" style="background: #fff3cd; border-color: #ffc107;">
+        <div class="step-title">💡 如果所有检查都通过但仍然无法同步</div>
+        <ol>
+            <li>清除浏览器缓存和数据</li>
+            <li>重新登录 Gitee（获取新的 Token）</li>
+            <li>检查网络连接</li>
+            <li>使用无痕模式打开应用测试</li>
+            <li>尝试不同的浏览器（Chrome、Edge、Firefox）</li>
+        </ol>
+    </div>
+
+    <script>
+        function addResult(containerId, content, type) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = content;
+            container.appendChild(resultDiv);
+        }
+
+        function checkCache() {
+            // 尝试读取 app.js 中的 branch 配置
+            fetch('app.js')
+                .then(response => response.text())
+                .then(code => {
+                    const match = code.match(/this\.branch\s*=\s*['"](.*?)['"]/);
+                    if (match) {
+                        const branch = match[1];
+                        if (branch === 'master') {
+                            addResult('cacheResult', `
+                                <strong>✅ 代码版本正确！</strong><br>
+                                当前 branch 配置: <code>${branch}</code><br>
+                                这是正确的版本，缓存应该没问题。
+                            `, 'success');
+                        } else {
+                            addResult('cacheResult', `
+                                <strong>❌ 代码版本旧！</strong><br>
+                                当前 branch 配置: <code>${branch}</code> (应该是 master)<br>
+                                <strong>请立即强制刷新 (Ctrl+F5)！</strong>
+                            `, 'error');
+                        }
+                    }
+                })
+                .catch(err => {
+                    addResult('cacheResult', `❌ 无法读取代码: ${err.message}`, 'error');
+                });
+        }
+
+        function checkLocalStorage() {
+            const token = localStorage.getItem('giteeToken');
+            const owner = localStorage.getItem('giteeOwner');
+            const username = localStorage.getItem('giteeUsername');
+            
+            let html = '<h4>本地存储配置:</h4>';
+            html += `<p>Token: ${token ? '✅ 已配置' : '❌ 未配置'}</p>`;
+            html += `<p>用户名: ${username || '❌ 未配置'}</p>`;
+            html += `<p>仓库所有者: ${owner || '❌ 未配置'}</p>`;
+            
+            if (token) {
+                html += `<p><strong>Token 前10位:</strong> ${token.substring(0, 10)}...</p>`;
+            }
+            
+            if (!token || !owner || !username) {
+                html += `<p class="highlight">⚠️ 配置不完整，请先登录 Gitee！</p>`;
+                addResult('localStorageResult', html, 'warning');
+            } else {
+                html += `<p>✅ 配置完整</p>`;
+                addResult('localStorageResult', html, 'success');
+            }
+        }
+
+        async function checkCloudData() {
+            const token = localStorage.getItem('giteeToken');
+            const owner = localStorage.getItem('giteeOwner');
+            const repo = 'cute-tasks-backup';
+            const branch = 'master';
+            
+            if (!token || !owner) {
+                addResult('cloudResult', '❌ 缺少 Token 或 Owner 配置', 'error');
+                return;
+            }
+            
+            try {
+                addResult('cloudResult', '🔄 正在检查云端数据...', 'info');
+                
+                // 检查文件
+                const response = await fetch(
+                    `https://gitee.com/api/v5/repos/${owner}/${repo}/contents/tasks.json?ref=${branch}`,
+                    { headers: { 'Authorization': `token ${token}` } }
+                );
+                
+                if (response.ok) {
+                    const fileInfo = await response.json();
+                    
+                    let fileData = null;
+                    if (Array.isArray(fileInfo)) {
+                        fileData = fileInfo[0];
+                    } else {
+                        fileData = fileInfo;
+                    }
+                    
+                    if (fileData) {
+                        const contentStr = decodeURIComponent(escape(atob(fileData.content)));
+                        const data = JSON.parse(contentStr);
+                        
+                        addResult('cloudResult', `
+                            <strong>✅ 云端文件存在</strong><br>
+                            分支: ${branch}<br>
+                            文件 SHA: ${fileData.sha.substring(0, 16)}...<br>
+                            最后更新: ${new Date(fileData.date).toLocaleString('zh-CN')}<br>
+                            任务数量: ${data.tasks ? data.tasks.length : 0}<br>
+                            星星数量: ${data.userData ? data.userData.totalStars : 0}<br>
+                            <br>
+                            <strong>前3个任务:</strong>
+                            ${data.tasks ? data.tasks.slice(0, 3).map(t => `<br>  - ${t.title} (${t.completed ? '已完成' : '未完成'})`).join('') : '<br>  无'}
+                        `, 'success');
+                    } else {
+                        addResult('cloudResult', 'ℹ️ 云端文件为空（首次使用正常）', 'info');
+                    }
+                } else if (response.status === 404) {
+                    addResult('cloudResult', 'ℹ️ 云端文件不存在（首次使用正常）', 'info');
+                } else {
+                    const error = await response.text();
+                    addResult('cloudResult', `❌ 检查失败: ${response.status}<br>${error}`, 'error');
+                }
+            } catch (error) {
+                addResult('cloudResult', `❌ 错误: ${error.message}`, 'error');
+            }
+        }
+
+        function testSyncButton() {
+            // 检查当前页面是否有 taskManager
+            if (typeof taskManager !== 'undefined' && taskManager.cloudSyncManager) {
+                const branch = taskManager.cloudSyncManager.branch;
+                if (branch === 'master') {
+                    addResult('syncButtonResult', `
+                        <strong>✅ taskManager 已加载</strong><br>
+                        Branch: ${branch} ✅<br>
+                        <button onclick="triggerSync()">🔄 手动触发一次同步</button>
+                    `, 'success');
+                } else {
+                    addResult('syncButtonResult', `
+                        <strong>⚠️ taskManager 已加载但分支错误</strong><br>
+                        Branch: ${branch} (应该是 master)<br>
+                        <strong>请强制刷新页面 (Ctrl+F5)！</strong>
+                    `, 'error');
+                }
+            } else {
+                addResult('syncButtonResult', `
+                    <strong>❌ taskManager 未加载</strong><br>
+                    这说明：
+                    <ol>
+                        <li>页面还没有完全加载完成</li>
+                        <li>或者你打开的不是 index.html</li>
+                        <li>或者页面有 JavaScript 错误导致加载失败</li>
+                    </ol>
+                    <strong>建议：</strong>
+                    <ul>
+                        <li>打开 index.html (不是这个排查页面)</li>
+                        <li>等待几秒让页面完全加载</li>
+                        <li>按 F12 查看控制台是否有错误</li>
+                    </ul>
+                `, 'error');
+            }
+        }
+
+        function triggerSync() {
+            if (taskManager && taskManager.cloudSyncManager) {
+                addResult('syncButtonResult', '🔄 正在触发同步...', 'info');
+                taskManager.cloudSyncManager.syncToCloud()
+                    .then(() => {
+                        addResult('syncButtonResult', '✅ 同步成功！', 'success');
+                    })
+                    .catch(err => {
+                        addResult('syncButtonResult', `❌ 同步失败: ${err.message}`, 'error');
+                    });
+            }
+        }
+
+        function checkConsoleErrors() {
+            addResult('consoleResult', `
+                <strong>如何检查控制台错误：</strong>
+                <ol>
+                    <li>按 <kbd>F12</kbd> 打开开发者工具</li>
+                    <li>点击 "Console"（控制台）标签</li>
+                    <li>查看是否有红色的错误信息</li>
+                    <li>如果有错误，截图发给我</li>
+                </ol>
+                
+                <p><strong>常见错误类型：</strong></p>
+                <ul>
+                    <li>Network Error - 网络问题</li>
+                    <li>401 Unauthorized - Token 无效或过期</li>
+                    <li>404 Not Found - 文件或仓库不存在</li>
+                    <li>只允许在分支上创建或更新文件 - 分支错误</li>
+                </ul>
+            `, 'info');
+        }
+
+        async function runFullCheck() {
+            addResult('fullCheckResult', '🔄 开始完整检查...', 'info');
+            
+            await new Promise(resolve => checkCache() && setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            checkLocalStorage();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await checkCloudData();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            testSyncButton();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            addResult('fullCheckResult', `
+                <strong>✅ 检查完成！</strong><br>
+                请查看上面的结果，如果有任何❌或⚠️，请按照提示操作。<br>
+                <br>
+                <strong>如果一切正常但仍然无法同步：</strong><br>
+                1. 打开 index.html（不是这个页面）<br>
+                2. 强制刷新 (Ctrl+F5)<br>
+                3. 添加一个测试任务<br>
+                4. 等待2-3秒，观察是否有通知<br>
+                5. 按 F12 打开控制台，查看错误信息
+            `, 'success');
+        }
+
+        // 页面加载时自动检查缓存
+        window.onload = function() {
+            checkCache();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>自动测试同步</title>
+</head>
+<body>
+    <h1>正在自动测试同步...</h1>
+    <p id="status">准备中...</p>
+    <pre id="log"></pre>
+
+    <script src="app.js"></script>
+    <script>
+        const statusEl = document.getElementById('status');
+        const logEl = document.getElementById('log');
+        let logs = [];
+
+        function log(msg) {
+            logs.push(msg);
+            logEl.textContent = logs.join('\n');
+            console.log(msg);
+        }
+
+        async function autoTest() {
+            try {
+                log('1. 初始化任务管理器...');
+                const taskManager = new CuteTaskManager();
+                log('✅ 任务管理器初始化成功');
+
+                // 检查是否已登录
+                const token = localStorage.getItem('giteeToken');
+                const username = localStorage.getItem('giteeUsername');
+
+                if (!token || !username) {
+                    log('❌ 未登录 Gitee，正在自动登录...');
+                    await taskManager.cloudSyncManager.handleLogin(
+                        'a00af272eb277e9e3c980d45c321e6be',
+                        'kuangquanshui73'
+                    );
+                    log('✅ 登录成功');
+                } else {
+                    log('✅ 已登录 Gitee');
+                }
+
+                // 添加测试任务
+                log('2. 添加测试任务...');
+                const task = {
+                    id: Date.now(),
+                    title: '自动化同步测试 ' + new Date().toLocaleTimeString(),
+                    notes: '这是一个自动化测试任务',
+                    priority: 'medium',
+                    dueDate: new Date().toISOString().split('T')[0],
+                    dueTime: '20:00',
+                    reminder: false,
+                    completed: false,
+                    createdAt: new Date().toISOString(),
+                    completedAt: null,
+                    review: '',
+                    reward: '',
+                    focusTime: 0
+                };
+                taskManager.tasks.push(task);
+                taskManager.saveTasks();
+                log('✅ 测试任务已添加: ' + task.title);
+
+                // 同步到云端
+                log('3. 开始同步到云端...');
+                await taskManager.cloudSyncManager.syncToCloud();
+                log('✅ 同步完成');
+
+                // 从云端拉取验证
+                log('4. 从云端拉取数据验证...');
+                await taskManager.cloudSyncManager.syncFromCloud();
+
+                const syncedTask = taskManager.tasks.find(t => t.id === task.id);
+                if (syncedTask) {
+                    log('✅ 云端同步验证成功！任务已保存到云端');
+                    statusEl.textContent = '✅ 测试通过！同步功能正常工作！';
+                    statusEl.style.color = 'green';
+                } else {
+                    log('❌ 验证失败：未找到同步的任务');
+                    statusEl.textContent = '❌ 测试失败';
+                    statusEl.style.color = 'red';
+                }
+
+            } catch (error) {
+                log('❌ 错误: ' + error.message);
+                log(error.stack);
+                statusEl.textContent = '❌ 测试失败';
+                statusEl.style.color = 'red';
+            }
+        }
+
+        // 页面加载后自动运行
+        window.onload = function() {
+            setTimeout(autoTest, 1000);
+        };
+    </script>
+</body>
+</html>

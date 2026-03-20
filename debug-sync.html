@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>同步调试工具</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .log { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .info { background: #d1ecf1; }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; font-size: 12px; }
+        button { padding: 15px 30px; font-size: 16px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 5px; }
+        button:hover { background: #45a049; }
+    </style>
+</head>
+<body>
+    <h1>🔧 同步调试工具</h1>
+    <p>Token: a00af272eb277e9e3c980d45c321e6be</p>
+    <p>用户名: kuangquanshui73</p>
+    <button onclick="startSync()">开始同步</button>
+    <div id="logs"></div>
+
+    <script>
+        function log(msg, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `log ${type}`;
+            div.innerHTML = `<pre>${msg}</pre>`;
+            document.getElementById('logs').appendChild(div);
+        }
+
+        async function startSync() {
+            document.getElementById('logs').innerHTML = '';
+            const token = 'a00af272eb277e9e3c980d45c321e6be';
+            const owner = 'kuangquanshui73';
+            const repo = 'cute-tasks-backup';
+
+            try {
+                log('1. 验证 Token...', 'info');
+                const userRes = await fetch('https://gitee.com/api/v5/user', {
+                    headers: { 'Authorization': `token ${token}` }
+                });
+                const user = await userRes.json();
+                log('用户信息:\n' + JSON.stringify(user, null, 2), userRes.ok ? 'success' : 'error');
+
+                if (!userRes.ok) return;
+
+                log('2. 检查仓库...', 'info');
+                const repoRes = await fetch(`https://gitee.com/api/v5/repos/${owner}/${repo}`, {
+                    headers: { 'Authorization': `token ${token}` }
+                });
+                const repoData = await repoRes.json();
+                log('仓库信息:\n' + JSON.stringify(repoData, null, 2), repoRes.ok ? 'success' : 'error');
+
+                log('3. 准备同步数据...', 'info');
+                const syncData = {
+                    tasks: [{id: 1, title: '测试任务', completed: false}],
+                    userData: {totalStars: 0},
+                    lastUpdated: new Date().toISOString()
+                };
+                log('同步数据:\n' + JSON.stringify(syncData, null, 2), 'info');
+
+                log('4. 获取文件 SHA...', 'info');
+                const getRes = await fetch(
+                    `https://gitee.com/api/v5/repos/${owner}/${repo}/contents/tasks.json`,
+                    { headers: { 'Authorization': `token ${token}` } }
+                );
+
+                let sha = null;
+                let getData = null;
+                if (getRes.ok) {
+                    getData = await getRes.json();
+                    log('文件信息:\n' + JSON.stringify(getData, null, 2), 'info');
+                    
+                    // 处理数组或对象的情况
+                    if (Array.isArray(getData)) {
+                        if (getData.length > 0 && getData[0].sha) {
+                            sha = getData[0].sha;
+                            log('文件存在（数组），SHA: ' + sha, 'success');
+                        } else {
+                            log('文件不存在（返回空数组）', 'info');
+                        }
+                    } else if (getData.sha) {
+                        sha = getData.sha;
+                        log('文件存在，SHA: ' + sha, 'success');
+                    } else {
+                        log('警告: 无法获取 SHA', 'error');
+                    }
+                } else {
+                    const errText = await getRes.text();
+                    log('文件不存在或获取失败:\n状态: ' + getRes.status + '\n' + errText, 'info');
+                }
+
+                log('5. 上传文件...', 'info');
+                const content = btoa(unescape(encodeURIComponent(JSON.stringify(syncData, null, 2))));
+                
+                // Gitee API: 更新文件需要 SHA，创建新文件需要显式设置 sha: null
+                const body = {
+                    content: content,
+                    message: '更新数据 - ' + new Date().toLocaleString('zh-CN'),
+                    sha: sha || null  // 创建新文件时传 null
+                };
+                
+                if (sha) {
+                    log('更新现有文件，SHA: ' + sha, 'info');
+                } else {
+                    log('创建新文件 (sha: null)', 'info');
+                }
+
+                log('请求体:\n' + JSON.stringify(body, null, 2), 'info');
+
+                const putRes = await fetch(
+                    `https://gitee.com/api/v5/repos/${owner}/${repo}/contents/tasks.json`,
+                    {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(body)
+                    }
+                );
+
+                const putData = await putRes.json();
+                log('响应状态: ' + putRes.status, putRes.ok ? 'success' : 'error');
+                log('响应内容:\n' + JSON.stringify(putData, null, 2), putRes.ok ? 'success' : 'error');
+
+                if (putRes.ok) {
+                    log('✅ 同步成功！', 'success');
+                } else {
+                    log('❌ 同步失败: ' + (putData.message || '未知错误'), 'error');
+                }
+
+            } catch (error) {
+                log('❌ 异常: ' + error.message + '\n' + error.stack, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

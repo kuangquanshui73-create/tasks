@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>同步测试工具</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        input { padding: 8px; margin: 5px; width: 300px; }
+    </style>
+</head>
+<body>
+    <h1>🔧 云同步测试工具</h1>
+
+    <div class="test-section info">
+        <h3>1. 输入 Gitee 信息</h3>
+        <input type="text" id="tokenInput" placeholder="Gitee Token (gitee_xxxx)" value="a00af272eb277e9e3c980d45c321e6be">
+        <input type="text" id="usernameInput" placeholder="Gitee 用户名" value="kuangquanshui73">
+        <br><br>
+        <button onclick="testLogin()">测试登录</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        const results = document.getElementById('results');
+
+        function addResult(title, content, type) {
+            const div = document.createElement('div');
+            div.className = `test-section ${type}`;
+            div.innerHTML = `<h3>${title}</h3><pre>${JSON.stringify(content, null, 2)}</pre>`;
+            results.appendChild(div);
+        }
+
+        async function testLogin() {
+            const token = document.getElementById('tokenInput').value.trim();
+            const username = document.getElementById('usernameInput').value.trim();
+
+            results.innerHTML = '';
+            addResult('开始测试', { token: token.substring(0, 10) + '...', username }, 'info');
+
+            // 测试 1: 验证 Token
+            try {
+                const response = await fetch('https://gitee.com/api/v5/user', {
+                    headers: { 'Authorization': `token ${token}` }
+                });
+                const user = await response.json();
+
+                if (response.ok && user.login) {
+                    addResult('✅ Token 验证成功', user, 'success');
+
+                    // 测试 2: 检查仓库是否存在
+                    const repoResponse = await fetch(
+                        `https://gitee.com/api/v5/repos/${username}/cute-tasks-backup`,
+                        { headers: { 'Authorization': `token ${token}` } }
+                    );
+                    const repo = await repoResponse.json();
+
+                    if (repoResponse.ok) {
+                        addResult('✅ 仓库访问成功', {
+                            name: repo.name,
+                            private: repo.private,
+                            public: repo.public,
+                            description: repo.description
+                        }, 'success');
+
+                        // 测试 3: 检查文件是否存在
+                        const fileResponse = await fetch(
+                            `https://gitee.com/api/v5/repos/${username}/cute-tasks-backup/contents/tasks.json`,
+                            { headers: { 'Authorization': `token ${token}` } }
+                        );
+
+                        if (fileResponse.ok) {
+                            const file = await fileResponse.json();
+                            addResult('✅ 文件访问成功', {
+                                name: file.name,
+                                size: file.size,
+                                sha: file.sha.substring(0, 10) + '...'
+                            }, 'success');
+                        } else {
+                            addResult('⚠️ 文件不存在（首次使用正常）', {
+                                status: fileResponse.status,
+                                message: '请先在任务本中添加任务并同步'
+                            }, 'info');
+                        }
+                    } else {
+                        addResult('❌ 仓库访问失败', {
+                            status: repoResponse.status,
+                            message: repo.message || '未知错误'
+                        }, 'error');
+                    }
+                } else {
+                    addResult('❌ Token 验证失败', user, 'error');
+                }
+            } catch (error) {
+                addResult('❌ 请求失败', {
+                    message: error.message,
+                    stack: error.stack
+                }, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

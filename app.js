@@ -36,7 +36,8 @@ class CuteTaskManager {
         this.initCloudSync();
         this.updateDailyProgress();
         this.updateRecommendSection();
-        
+        this.initMobileNav(); // 初始化移动端导航
+
         // 每分钟更新时间
         setInterval(() => this.updateCurrentDate(), 60000);
         // 每秒更新倒计时
@@ -217,6 +218,24 @@ class CuteTaskManager {
                 this.closeModal(e.target.id);
             }
         });
+
+        // 移动端导航栏
+        const bottomNav = document.getElementById('bottomNav');
+        if (bottomNav) {
+            bottomNav.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    this.switchMobileTab(item.dataset.tab);
+                });
+            });
+        }
+
+        // 悬浮添加按钮
+        const fab = document.getElementById('fabAdd');
+        if (fab) {
+            fab.addEventListener('click', () => {
+                this.showAddTaskForm();
+            });
+        }
     }
 
     // 添加任务
@@ -1727,6 +1746,69 @@ class CloudSyncManager {
             this.stopAutoSync();
             this.updateUI();
             this.taskManager.showNotification('已退出登录', 'info');
+        }
+    }
+
+    // 初始化移动端导航
+    initMobileNav() {
+        // 检测是否为移动设备
+        this.isMobile = window.innerWidth < 768;
+
+        // 监听窗口大小变化
+        window.addEventListener('resize', () => {
+            this.isMobile = window.innerWidth < 768;
+        });
+    }
+
+    // 切换移动端标签页
+    switchMobileTab(tab) {
+        // 更新导航栏状态
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => {
+            if (item.dataset.tab === tab) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+
+        // 根据标签页显示不同内容
+        switch (tab) {
+            case 'today':
+                this.renderTasks('today');
+                break;
+            case 'all':
+                this.renderTasks('all');
+                break;
+            case 'rewards':
+                this.scrollToSection('rewards');
+                break;
+            case 'settings':
+                this.scrollToSection('settings');
+                break;
+        }
+    }
+
+    // 滚动到指定区域
+    scrollToSection(sectionId) {
+        const section = document.querySelector(`.${sectionId}-shop, .settings-section`);
+        if (section) {
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    // 显示添加任务表单（移动端）
+    showAddTaskForm() {
+        const addSection = document.querySelector('.quick-add');
+        if (addSection) {
+            addSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // 聚焦输入框
+            setTimeout(() => {
+                const input = document.getElementById('taskTitle');
+                if (input) {
+                    input.focus();
+                }
+            }, 300);
         }
     }
 }

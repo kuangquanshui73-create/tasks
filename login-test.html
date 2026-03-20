@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gitee 登录测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .test-result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            background: #f5f5f5;
+        }
+
+        .test-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            background: white;
+        }
+
+        .test-item.success {
+            border-left: 4px solid #4caf50;
+        }
+
+        .test-item.error {
+            border-left: 4px solid #f44336;
+        }
+
+        .test-item.info {
+            border-left: 4px solid #2196f3;
+        }
+
+        .test-item-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .test-item-content {
+            font-size: 14px;
+            color: #666;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔑 Gitee 登录测试</h1>
+
+        <div class="form-group">
+            <label for="token">访问令牌 (Token)</label>
+            <input type="password" id="token" placeholder="gitee_xxxxxxxxxxxx" value="a00af272eb277e9e3c980d45c321e6be">
+        </div>
+
+        <div class="form-group">
+            <label for="username">Gitee 用户名</label>
+            <input type="text" id="username" placeholder="你的用户名" value="kuangquanshui73">
+        </div>
+
+        <button class="btn btn-primary" onclick="runLoginTest()">🚀 开始测试</button>
+
+        <div class="test-result" id="testResult">
+            <div style="text-align: center; color: #999; padding: 20px;">
+                点击按钮开始测试
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function runLoginTest() {
+            const token = document.getElementById('token').value.trim();
+            const username = document.getElementById('username').value.trim();
+            const resultDiv = document.getElementById('testResult');
+
+            if (!token || !username) {
+                resultDiv.innerHTML = '<div class="test-item error"><div class="test-item-title">❌ 错误</div><div class="test-item-content">请填写完整的令牌和用户名</div></div>';
+                return;
+            }
+
+            resultDiv.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div>正在测试...</div>
+                </div>
+            `;
+
+            let html = '';
+
+            // 测试1: 验证 Token
+            try {
+                html += '<div class="test-item info"><div class="test-item-title">📡 测试1: 验证 Token</div>';
+                html += '<div class="test-item-content">正在请求 https://gitee.com/api/v5/user ...</div></div>';
+                resultDiv.innerHTML = html;
+
+                const response = await fetch('https://gitee.com/api/v5/user', {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                    },
+                });
+
+                html = resultDiv.innerHTML;
+                html += `<div class="test-item-content">状态码: ${response.status} ${response.statusText}</div>`;
+
+                if (response.ok) {
+                    const user = await response.json();
+                    html += `<div class="test-item-content">✅ Token 有效!</div>`;
+                    html += `<div class="test-item-content">用户信息:</div>`;
+                    html += `<div class="test-item-content">  - 登录名: ${user.login || user.name}</div>`;
+                    html += `<div class="test-item-content">  - ID: ${user.id}</div>`;
+                    html += `<div class="test-item-content">  - 邮箱: ${user.email || '未设置'}</div>`;
+
+                    html += '</div>';
+                    html += '<div class="test-item success"><div class="test-item-title">✅ 测试1: 通过</div></div>';
+                } else {
+                    const error = await response.json();
+                    html += `<div class="test-item-content">❌ Token 无效!</div>`;
+                    html += `<div class="test-item-content">错误信息: ${JSON.stringify(error, null, 2)}</div>`;
+                    html += '</div>';
+                    html += '<div class="test-item error"><div class="test-item-title">❌ 测试1: 失败</div><div class="test-item-content">Token 无效或已过期</div></div>';
+                    resultDiv.innerHTML = html;
+                    return;
+                }
+            } catch (error) {
+                html += `<div class="test-item-content">❌ 请求失败!</div>`;
+                html += `<div class="test-item-content">错误: ${error.message}</div>`;
+                html += '</div>';
+                html += '<div class="test-item error"><div class="test-item-title">❌ 测试1: 失败</div><div class="test-item-content">网络错误或 CORS 问题</div></div>';
+                resultDiv.innerHTML = html;
+                return;
+            }
+
+            resultDiv.innerHTML = html;
+
+            // 测试2: 检查仓库
+            html = resultDiv.innerHTML;
+            html += '<div class="test-item info"><div class="test-item-title">📦 测试2: 检查仓库</div>';
+            html += '<div class="test-item-content">正在检查仓库 kuangquanshui73/cute-tasks-backup ...</div></div>';
+            resultDiv.innerHTML = html;
+
+            try {
+                const repoResponse = await fetch(`https://gitee.com/api/v5/repos/${username}/cute-tasks-backup`, {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                    },
+                });
+
+                html = resultDiv.innerHTML;
+                html += `<div class="test-item-content">状态码: ${repoResponse.status} ${repoResponse.statusText}</div>`;
+
+                if (repoResponse.ok) {
+                    const repo = await repoResponse.json();
+                    html += `<div class="test-item-content">✅ 仓库存在!</div>`;
+                    html += `<div class="test-item-content">仓库信息:</div>`;
+                    html += `<div class="test-item-content">  - 名称: ${repo.full_name}</div>`;
+                    html += `<div class="test-item-content">  - 描述: ${repo.description || '无'}</div>`;
+                    html += `<div class="test-item-content">  - 默认分支: ${repo.default_branch}</div>`;
+                    html += `<div class="test-item-content">  - 是否为私有: ${repo.private}</div>`;
+
+                    // 测试3: 检查 tasks.json 文件
+                    html += '</div>';
+                    html = resultDiv.innerHTML;
+                    html += '<div class="test-item info"><div class="test-item-title">📄 测试3: 检查 tasks.json</div>';
+                    html += '<div class="test-item-content">正在检查文件 tasks.json ...</div></div>';
+                    resultDiv.innerHTML = html;
+
+                    const fileResponse = await fetch(`https://gitee.com/api/v5/repos/${username}/cute-tasks-backup/contents/tasks.json?ref=master`, {
+                        headers: {
+                            'Authorization': `token ${token}`,
+                        },
+                    });
+
+                    html = resultDiv.innerHTML;
+                    html += `<div class="test-item-content">状态码: ${fileResponse.status} ${fileResponse.statusText}</div>`;
+
+                    if (fileResponse.ok) {
+                        const file = await fileResponse.json();
+                        html += `<div class="test-item-content">✅ 文件存在!</div>`;
+                        html += `<div class="test-item-content">文件信息:</div>`;
+                        html += `<div class="test-item-content">  - 路径: ${file.path}</div>`;
+                        html += `<div class="test-item-content">  - 大小: ${file.size} 字节</div>`;
+                        html += `<div class="test-item-content">  - SHA: ${file.sha.substring(0, 10)}...</div>`;
+
+                        // 解码内容
+                        if (file.content) {
+                            try {
+                                const content = atob(file.content);
+                                const tasks = JSON.parse(content);
+                                html += `<div class="test-item-content">  - 任务数量: ${tasks.tasks ? tasks.tasks.length : 0}</div>`;
+                            } catch (e) {
+                                html += `<div class="test-item-content">  - ⚠️ 无法解析内容</div>`;
+                            }
+                        }
+
+                        html += '</div>';
+                        html += '<div class="test-item success"><div class="test-item-title">✅ 测试3: 通过</div></div>';
+                    } else {
+                        if (fileResponse.status === 404) {
+                            html += `<div class="test-item-content">⚠️ 文件不存在 (这是正常的,首次登录时需要创建)</div>`;
+                        } else {
+                            const error = await fileResponse.json();
+                            html += `<div class="test-item-content">❌ 检查文件失败!</div>`;
+                            html += `<div class="test-item-content">错误: ${JSON.stringify(error, null, 2)}</div>`;
+                        }
+                        html += '</div>';
+                    }
+
+                    html += '<div class="test-item success"><div class="test-item-title">✅ 测试2: 通过</div></div>';
+                } else if (repoResponse.status === 404) {
+                    html += `<div class="test-item-content">❌ 仓库不存在!</div>`;
+                    html += `<div class="test-item-content">请确保仓库名称是: cute-tasks-backup</div>`;
+                    html += '</div>';
+                    html += '<div class="test-item error"><div class="test-item-title">❌ 测试2: 失败</div></div>';
+                } else {
+                    const error = await repoResponse.json();
+                    html += `<div class="test-item-content">❌ 检查仓库失败!</div>`;
+                    html += `<div class="test-item-content">错误: ${JSON.stringify(error, null, 2)}</div>`;
+                    html += '</div>';
+                    html += '<div class="test-item error"><div class="test-item-title">❌ 测试2: 失败</div></div>';
+                }
+            } catch (error) {
+                html += `<div class="test-item-content">❌ 请求失败!</div>`;
+                html += `<div class="test-item-content">错误: ${error.message}</div>`;
+                html += '</div>';
+                html += '<div class="test-item error"><div class="test-item-title">❌ 测试2: 失败</div></div>';
+            }
+
+            resultDiv.innerHTML = html;
+
+            // 最终结论
+            html = resultDiv.innerHTML;
+            html += '<div class="test-item success" style="background: #e8f5e9;"><div class="test-item-title">🎉 结论</div>';
+            html += '<div class="test-item-content">Token 和仓库配置都正常!可以直接在主应用中登录。</div></div>';
+            resultDiv.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
