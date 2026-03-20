@@ -25,14 +25,14 @@ body {
     padding-bottom: 90px; /* 为底部导航留空间 */
 }
 
-/* 头部样式 - 简洁版 */
+/* 头部样式 - 简洁紧凑版 */
 .header {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
-    padding: 20px 15px;
-    border-radius: 0 0 25px 25px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    margin-bottom: 15px;
+    padding: 15px 12px;
+    border-radius: 0 0 20px 20px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    margin-bottom: 12px;
     text-align: center;
     position: sticky;
     top: 0;
@@ -44,37 +44,46 @@ body {
 }
 
 .welcome-text h1 {
-    font-size: 1.4em;
+    font-size: 1.2em;
     font-weight: 600;
     color: #667eea;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
     text-shadow: none;
     position: relative;
     z-index: 1;
 }
 
 .date-text {
-    font-size: 0.95em;
+    font-size: 0.85em;
     color: #666;
     opacity: 0.8;
     position: relative;
     z-index: 1;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
-/* 倒计时 */
+/* 倒计时 - 更小更紧凑 */
 .countdown-timer {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     color: white;
-    padding: 12px 20px;
-    border-radius: 15px;
+    padding: 10px 16px;
+    border-radius: 12px;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    font-size: 0.9em;
+    gap: 6px;
+    font-size: 0.8em;
     font-weight: 600;
-    box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
+    box-shadow: 0 2px 10px rgba(240, 147, 251, 0.25);
     animation: pulse 2s infinite;
+}
+
+.countdown-label {
+    display: none; /* 隐藏文字，只显示时间 */
+}
+
+.countdown-time {
+    font-size: 1.1em;
+    font-weight: 700;
 }
 
 @keyframes pulse {
@@ -87,15 +96,15 @@ body {
     font-weight: 700;
 }
 
-/* 成就徽章 - 水平紧凑版 */
+/* 成就徽章 - 紧凑清晰版 */
 .achievements {
     display: flex;
     justify-content: space-around;
-    gap: 8px;
-    margin-top: 15px;
+    gap: 6px;
+    margin-top: 12px;
     flex-wrap: nowrap;
     overflow-x: auto;
-    padding: 5px 0;
+    padding: 8px 5px;
 }
 
 .achievements::-webkit-scrollbar {
@@ -106,65 +115,66 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 12px 15px;
+    padding: 10px 12px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 15px;
+    border-radius: 12px;
     border: none;
     color: white;
-    min-width: 85px;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    min-width: 70px;
+    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
     animation: none;
 }
 
 .badge-icon {
-    font-size: 1.8em;
-    margin-bottom: 4px;
+    font-size: 1.4em;
+    margin-bottom: 3px;
 }
 
 .badge-count {
-    font-size: 1.6em;
+    font-size: 1.3em;
     font-weight: bold;
     color: white;
-    line-height: 1.2;
+    line-height: 1.1;
 }
 
 .badge-label {
-    font-size: 0.75em;
+    font-size: 0.7em;
     color: rgba(255, 255, 255, 0.9);
+    margin-top: 2px;
 }
 
-/* 快速添加 - 简洁版 */
+/* 快速添加 - 紧凑版 */
 .quick-add {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
 }
 
 .add-card {
     background: white;
-    padding: 20px 15px;
-    border-radius: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    padding: 16px 12px;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
 .add-card h2 {
     text-align: center;
     color: #667eea;
-    margin-bottom: 15px;
-    font-size: 1.3em;
+    margin-bottom: 12px;
+    font-size: 1.1em;
     font-weight: 600;
 }
 
 .input-group {
     display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
+    gap: 8px;
+    margin-bottom: 12px;
 }
 
 .input-group input[type="text"] {
     flex: 1;
-    padding: 16px 20px;
+    padding: 14px 16px;
     border: 2px solid #e0e0e0;
-    border-radius: 15px;
-    font-size: 16px;
+    border-radius: 12px;
+    font-size: 15px;
     background: #f8f9fa;
     transition: all 0.3s;
     -webkit-appearance: none;
@@ -174,19 +184,19 @@ body {
     outline: none;
     border-color: #667eea;
     background: white;
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .add-btn {
-    width: 55px;
-    height: 55px;
+    width: 48px;
+    height: 48px;
     border: none;
-    border-radius: 15px;
+    border-radius: 12px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    font-size: 24px;
+    font-size: 22px;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 3px 12px rgba(102, 126, 234, 0.35);
     transition: all 0.3s;
     display: flex;
     align-items: center;
@@ -195,14 +205,14 @@ body {
 
 .add-btn:active {
     transform: scale(0.95);
-    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25);
 }
 
 .add-hint {
     text-align: center;
     color: #999;
-    font-size: 0.85em;
-    margin-bottom: 15px;
+    font-size: 0.8em;
+    margin-bottom: 12px;
 }
 
 /* 任务选项 - 折叠版 */
@@ -348,34 +358,34 @@ body {
 
 .progress-card {
     background: white;
-    padding: 20px 15px;
-    border-radius: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    padding: 16px 12px;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
 .progress-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .progress-header h3 {
-    font-size: 1.1em;
+    font-size: 1em;
     color: #667eea;
     font-weight: 600;
 }
 
 .progress-stats {
-    font-size: 0.9em;
+    font-size: 0.85em;
     color: #666;
 }
 
 .progress-bar-container {
     width: 100%;
-    height: 12px;
+    height: 10px;
     background: #e0e0e0;
-    border-radius: 10px;
+    border-radius: 8px;
     overflow: hidden;
 }
 
@@ -427,13 +437,13 @@ body {
     gap: 10px;
 }
 
-/* 任务卡片 */
+/* 任务卡片 - 更紧凑 */
 .task-card {
     background: white;
-    padding: 18px 15px;
-    border-radius: 18px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    border-left: 4px solid #e0e0e0;
+    padding: 14px 12px;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border-left: 3px solid #e0e0e0;
     transition: all 0.3s;
     position: relative;
     overflow: hidden;
@@ -441,7 +451,7 @@ body {
 
 .task-card:active {
     transform: scale(0.98);
-    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 .task-card.priority-high {
@@ -457,7 +467,7 @@ body {
 }
 
 .task-card.completed {
-    opacity: 0.6;
+    opacity: 0.5;
     border-left-color: #e0e0e0;
     background: #f8f9fa;
 }
@@ -470,13 +480,13 @@ body {
 .task-header {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 8px;
+    gap: 10px;
+    margin-bottom: 6px;
 }
 
 .task-checkbox {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
     border: 2px solid #e0e0e0;
     border-radius: 50%;
     cursor: pointer;
@@ -496,7 +506,7 @@ body {
 .task-checkbox.checked::after {
     content: '✓';
     color: white;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: bold;
 }
 
@@ -506,18 +516,18 @@ body {
 }
 
 .task-title {
-    font-size: 1em;
+    font-size: 0.95em;
     color: #333;
     font-weight: 500;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
     word-wrap: break-word;
     word-break: break-word;
 }
 
 .task-meta {
     display: flex;
-    gap: 10px;
-    font-size: 0.8em;
+    gap: 8px;
+    font-size: 0.75em;
     color: #999;
     flex-wrap: wrap;
 }
@@ -525,17 +535,17 @@ body {
 .task-meta-item {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
 }
 
 .task-actions {
     display: flex;
-    gap: 8px;
-    margin-top: 10px;
+    gap: 6px;
+    margin-top: 8px;
 }
 
 .task-btn {
-    padding: 8px 14px;
+    padding: 6px 12px;
     border: none;
     border-radius: 10px;
     font-size: 0.85em;
