@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>清除缓存 - 小可爱任务本</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 30px;
+            padding: 40px 30px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 10px 40px rgba(255, 107, 157, 0.3);
+            text-align: center;
+        }
+
+        .emoji {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: bounce 1s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        h1 {
+            color: #FF6B9D;
+            font-size: 1.8em;
+            margin-bottom: 15px;
+        }
+
+        p {
+            color: #666;
+            font-size: 1em;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #FF6B9D 0%, #FF9A9E 100%);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(255, 107, 157, 0.4);
+            transition: all 0.3s;
+            text-decoration: none;
+            margin-bottom: 15px;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #FF6B9D;
+            border: 3px solid #FF9A9E;
+            box-shadow: none;
+        }
+
+        .step {
+            background: #FFF5F8;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .step h3 {
+            color: #FF6B9D;
+            font-size: 1em;
+            margin-bottom: 8px;
+        }
+
+        .step p {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="emoji">🔄</div>
+        <h1>清除缓存指南</h1>
+        <p>如果手机上还是旧版本，请按照以下步骤操作：</p>
+
+        <div class="step">
+            <h3>📱 iPhone 用户</h3>
+            <p>1. 关闭浏览器应用<br>2. 重新打开<br>3. 访问链接</p>
+        </div>
+
+        <div class="step">
+            <h3>📱 Android 用户</h3>
+            <p>1. 点击浏览器菜单 (⋮)<br>2. 选择"清除浏览数据"<br>3. 勾选"缓存"<br>4. 点击"清除"</p>
+        </div>
+
+        <a href="index.html" class="btn">🚀 立即刷新</a>
+        <a href="index.html?v=2" class="btn btn-secondary">🔄 强制刷新</a>
+    </div>
+</body>
+</html>
