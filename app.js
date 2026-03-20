@@ -224,6 +224,7 @@ class CuteTaskManager {
         const title = document.getElementById('taskTitle').value.trim();
         if (!title) return;
 
+        const now = new Date();
         const task = {
             id: Date.now(),
             title: title,
@@ -233,7 +234,8 @@ class CuteTaskManager {
             dueTime: document.getElementById('taskDueTime').value,
             reminder: document.getElementById('taskReminder').checked,
             completed: false,
-            createdAt: new Date().toISOString(),
+            createdAt: now.toISOString(),
+            lastModified: now.toISOString(),
             completedAt: null,
             review: '',
             reward: '',
@@ -494,6 +496,7 @@ class CuteTaskManager {
             // 如果已完成,则取消完成
             task.completed = false;
             task.completedAt = null;
+            task.lastModified = new Date().toISOString();
             this.saveTasks();
             this.renderTasks();
             this.updateStats();
@@ -503,16 +506,16 @@ class CuteTaskManager {
 
         this.currentEditingTask = taskId;
         document.getElementById('completedTaskTitle').textContent = task.title;
-        
+
         // 根据优先级计算星星
         const stars = this.calculateStars(task);
         document.getElementById('earnedStarsCount').textContent = stars;
-        
+
         // 清空表单
         document.getElementById('taskReview').value = '';
         document.getElementById('customReward').value = '';
         document.querySelectorAll('.suggestion-btn').forEach(b => b.classList.remove('selected'));
-        
+
         document.getElementById('completeModal').style.display = 'flex';
     }
 
@@ -546,6 +549,7 @@ class CuteTaskManager {
 
         task.completed = true;
         task.completedAt = new Date().toISOString();
+        task.lastModified = new Date().toISOString();
         task.review = review;
         task.reward = reward;
 
@@ -572,6 +576,7 @@ class CuteTaskManager {
 
         task.completed = true;
         task.completedAt = new Date().toISOString();
+        task.lastModified = new Date().toISOString();
 
         const stars = this.calculateStars(task);
         this.userData.totalStars += stars;
@@ -611,13 +616,14 @@ class CuteTaskManager {
     saveEdit() {
         const taskId = parseInt(document.getElementById('editTaskId').value);
         const task = this.tasks.find(t => t.id === taskId);
-        
+
         if (task) {
             task.title = document.getElementById('editTaskTitle').value.trim();
             task.notes = document.getElementById('editTaskNotes').value.trim();
             task.priority = document.querySelector('input[name="editPriority"]:checked').value;
             task.dueDate = document.getElementById('editTaskDueDate').value;
             task.dueTime = document.getElementById('editTaskDueTime').value;
+            task.lastModified = new Date().toISOString(); // 更新修改时间
 
             this.saveTasks();
             this.renderTasks();
@@ -1207,16 +1213,22 @@ class CloudSyncManager {
         this.filePath = 'tasks.json';
         this.username = localStorage.getItem('giteeUsername');
         this.autoSyncInterval = null;
-        this.branch = 'main';
+        this.branch = 'master';
     }
 
     init() {
         this.updateUI();
         this.bindEvents();
-        
-        // 如果已登录,启动自动同步
+
+        // 如果已登录,立即同步一次,然后启动自动同步
         if (this.token) {
-            this.startAutoSync();
+            // 先从云端同步数据,再启动自动上传
+            this.syncFromCloud().then(() => {
+                this.startAutoSync();
+            }).catch(() => {
+                // 如果首次同步失败(云端没有数据),仍然启动自动同步
+                this.startAutoSync();
+            });
         }
     }
 
@@ -1418,8 +1430,9 @@ class CloudSyncManager {
     // 创建初始文件
     async createInitialFile() {
         try {
+            // 使用 POST 创建新文件
             await fetch(`https://gitee.com/api/v5/repos/${this.repoOwner}/${this.repoName}/contents/${this.filePath}`, {
-                method: 'PUT',
+                method: 'POST',
                 headers: {
                     'Authorization': `token ${this.token}`,
                     'Content-Type': 'application/json',
@@ -1427,6 +1440,7 @@ class CloudSyncManager {
                 body: JSON.stringify({
                     content: this.getDataString(),
                     message: '初始化任务本数据',
+                    branch: this.branch
                 }),
             });
 
@@ -1444,7 +1458,7 @@ class CloudSyncManager {
         }
 
         try {
-            // 先获取文件的SHA
+            // 先获取文件的SHA（如果文件存在）
             const getResponse = await fetch(
                 `https://gitee.com/api/v5/repos/${this.repoOwner}/${this.repoName}/contents/${this.filePath}?ref=${this.branch}`,
                 {
@@ -1454,32 +1468,51 @@ class CloudSyncManager {
                 }
             );
 
-            if (!getResponse.ok) {
-                this.taskManager.showNotification('❌ 获取云端数据失败，请检查网络!', 'error');
-                console.error('获取文件失败');
-                return;
+            let sha = null;
+            if (getResponse.ok) {
+                const fileInfo = await getResponse.json();
+                // 处理数组或对象的情况
+                if (Array.isArray(fileInfo)) {
+                    if (fileInfo.length > 0 && fileInfo[0].sha) {
+                        sha = fileInfo[0].sha;
+                    }
+                } else if (fileInfo.sha) {
+                    sha = fileInfo.sha;
+                }
             }
 
-            const fileInfo = await getResponse.json();
             const content = this.getDataString();
             const message = `更新任务数据 - ${new Date().toLocaleString('zh-CN')}`;
 
-            // 更新文件
-            await fetch(
+            // Gitee API: 创建新文件用 POST，更新文件用 PUT
+            const method = sha ? 'PUT' : 'POST';
+            const body = {
+                content: btoa(unescape(encodeURIComponent(content))),
+                message: message,
+                branch: this.branch
+            };
+            if (sha) {
+                body.sha = sha;
+            }
+
+            const putResponse = await fetch(
                 `https://gitee.com/api/v5/repos/${this.repoOwner}/${this.repoName}/contents/${this.filePath}`,
                 {
-                    method: 'PUT',
+                    method: method,
                     headers: {
                         'Authorization': `token ${this.token}`,
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        content: btoa(unescape(encodeURIComponent(content))),
-                        sha: fileInfo.sha,
-                        message: message,
-                    }),
+                    body: JSON.stringify(body),
                 }
             );
+
+            if (!putResponse.ok) {
+                const errorData = await putResponse.json();
+                console.error('同步失败:', errorData);
+                this.taskManager.showNotification('❌ 同步失败: ' + (errorData.message || '未知错误'), 'error');
+                return;
+            }
 
             this.updateLastSyncTime();
             console.log('云端同步成功');
@@ -1514,8 +1547,23 @@ class CloudSyncManager {
             }
 
             const fileInfo = await response.json();
-            const content = decodeURIComponent(escape(atob(fileInfo.content)));
-            const data = JSON.parse(content);
+
+            // 处理数组或对象的情况
+            let contentStr = null;
+            if (Array.isArray(fileInfo)) {
+                if (fileInfo.length > 0 && fileInfo[0].content) {
+                    contentStr = decodeURIComponent(escape(atob(fileInfo[0].content)));
+                }
+            } else if (fileInfo.content) {
+                contentStr = decodeURIComponent(escape(atob(fileInfo.content)));
+            }
+
+            if (!contentStr) {
+                this.taskManager.showNotification('❌ 云端数据格式错误!', 'error');
+                return;
+            }
+
+            const data = JSON.parse(contentStr);
 
             // 合并云端数据
             this.mergeCloudData(data);
@@ -1531,32 +1579,65 @@ class CloudSyncManager {
     mergeCloudData(cloudData) {
         // 设置标志位防止saveUserData触发新的云同步（避免死循环）
         this.taskManager._isMergingCloud = true;
-        
-        // 合并任务
-        const existingIds = this.taskManager.tasks.map(t => t.id);
-        const newTasks = cloudData.tasks.filter(t => !existingIds.includes(t.id));
-        
-        if (newTasks.length > 0) {
-            this.taskManager.tasks = [...this.taskManager.tasks, ...newTasks];
+
+        try {
+            // 创建本地任务映射,方便快速查找
+            const existingMap = new Map(
+                this.taskManager.tasks.map(t => [t.id, t])
+            );
+
+            // 合并任务:根据最后修改时间决定使用哪个版本
+            cloudData.tasks.forEach(cloudTask => {
+                const localTask = existingMap.get(cloudTask.id);
+
+                if (!localTask) {
+                    // 新任务,直接添加
+                    this.taskManager.tasks.push(cloudTask);
+                } else {
+                    // 任务已存在,需要决定使用哪个版本
+                    const cloudModified = new Date(cloudTask.lastModified || cloudTask.completedAt || cloudTask.createdAt || 0);
+                    const localModified = new Date(localTask.lastModified || localTask.completedAt || localTask.createdAt || 0);
+
+                    if (cloudModified > localModified) {
+                        // 云端版本更新,使用云端版本
+                        const index = this.taskManager.tasks.findIndex(t => t.id === cloudTask.id);
+                        if (index !== -1) {
+                            this.taskManager.tasks[index] = cloudTask;
+                        }
+                    }
+                    // 如果本地版本更新,保留本地版本
+                }
+            });
+
             this.taskManager.saveTasks();
+
+            // 合并用户数据
+            if (cloudData.userData) {
+                this.taskManager.userData.totalStars = Math.max(
+                    this.taskManager.userData.totalStars,
+                    cloudData.userData.totalStars || 0
+                );
+                this.taskManager.userData.streakDays = Math.max(
+                    this.taskManager.userData.streakDays,
+                    cloudData.userData.streakDays || 0
+                );
+                this.taskManager.userData.totalCompleted = Math.max(
+                    this.taskManager.userData.totalCompleted,
+                    cloudData.userData.totalCompleted || 0
+                );
+                this.taskManager.totalFocusTime = Math.max(
+                    this.taskManager.userData.totalFocusTime || 0,
+                    cloudData.userData.totalFocusTime || 0
+                );
+                this.taskManager.saveUserData();
+            }
+        } catch (error) {
+            console.error('合并数据时出错:', error);
+        } finally {
+            // 解除标志位
+            this.taskManager._isMergingCloud = false;
         }
-        
-        // 合并用户数据
-        if (cloudData.userData) {
-            this.taskManager.userData.totalStars = Math.max(
-                this.taskManager.userData.totalStars,
-                cloudData.userData.totalStars || 0
-            );
-            this.taskManager.userData.streakDays = Math.max(
-                this.taskManager.userData.streakDays,
-                cloudData.userData.streakDays || 0
-            );
-            this.taskManager.saveUserData();
-        }
-        
-        // 解除标志位
-        this.taskManager._isMergingCloud = false;
-        
+
         // 更新界面
         this.taskManager.renderTasks();
         this.taskManager.updateStats();
@@ -1574,14 +1655,21 @@ class CloudSyncManager {
 
     // 启动自动同步
     startAutoSync() {
-        // 每5分钟自动同步
+        // 每5分钟自动同步(先下载再上传)
         if (this.autoSyncInterval) {
             clearInterval(this.autoSyncInterval);
         }
-        this.autoSyncInterval = setInterval(() => {
-            this.syncToCloud();
+        this.autoSyncInterval = setInterval(async () => {
+            try {
+                // 先从云端获取最新数据
+                await this.syncFromCloud();
+                // 再上传本地数据
+                await this.syncToCloud();
+            } catch (error) {
+                console.error('自动同步失败:', error);
+            }
         }, 5 * 60 * 1000);
-        
+
         // 页面关闭前同步
         window.addEventListener('beforeunload', () => {
             this.syncToCloud();
