@@ -2,488 +2,898 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💖 小可爱任务本 · 每天进步一点点</title>
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="小可爱任务本">
-    <meta name="theme-color" content="#FF9A9E">
-    <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="styles.css">
-    <!-- 移动端使用超级可爱样式 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>💖 游戏化完整版</title>
     <link rel="stylesheet" href="styles-mobile-v2.css">
+    <style>
+        /* 强制显示移动端样式 */
+        @media (min-width: 768px) {
+            body {
+                background: #f5f5f5;
+            }
+            .container {
+                max-width: 420px;
+                margin: 20px auto;
+                border-radius: 30px;
+                overflow: hidden;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            }
+            .bottom-nav {
+                display: flex !important;
+            }
+            .fab {
+                display: flex !important;
+            }
+        }
+
+        /* 隐藏/显示不同页面 */
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+
+        /* 奖励商店卡片 */
+        .reward-card {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        .reward-card:active {
+            transform: scale(0.98);
+        }
+
+        .reward-card.locked {
+            opacity: 0.5;
+        }
+
+        .reward-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .reward-icon {
+            font-size: 3em;
+        }
+
+        .reward-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #667eea;
+            flex: 1;
+        }
+
+        .reward-cost {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+        }
+
+        .reward-desc {
+            color: #666;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .reward-progress {
+            margin-top: 12px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FF9A9E 0%, #FFBAC3 100%);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.5) 50%, transparent 100%);
+            animation: shimmer 2s infinite;
+        }
+
+        .reward-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85em;
+            color: #999;
+        }
+
+        .claim-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%);
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+            box-shadow: 0 4px 15px rgba(255, 154, 158, 0.4);
+            transition: all 0.3s;
+        }
+
+        .claim-btn:active {
+            transform: scale(0.95);
+        }
+
+        .claim-btn:disabled {
+            background: #ccc;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* 设置卡片 */
+        .setting-card {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 15px;
+        }
+
+        .setting-card h3 {
+            color: #667eea;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .setting-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-label {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95em;
+            color: #333;
+        }
+
+        .setting-icon {
+            font-size: 1.3em;
+        }
+
+        .setting-desc {
+            font-size: 0.8em;
+            color: #999;
+            margin-top: 3px;
+        }
+
+        .setting-input {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 0.9em;
+            transition: all 0.3s;
+            flex: 1;
+        }
+
+        .setting-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .toggle-switch {
+            width: 50px;
+            height: 28px;
+            background: #e0e0e0;
+            border-radius: 14px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            transition: left 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .toggle-switch.active::after {
+            left: 25px;
+        }
+
+        .setting-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .setting-btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .setting-btn.danger {
+            background: linear-gradient(135deg, #f44336 0%, #e91e63 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);
+        }
+
+        .setting-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 云同步状态 */
+        .sync-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin-top: 10px;
+        }
+
+        .sync-status.connected {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(139, 195, 74, 0.1) 100%);
+            border: 2px solid #4caf50;
+        }
+
+        .sync-status.disconnected {
+            background: linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(233, 30, 99, 0.1) 100%);
+            border: 2px solid #f44336;
+        }
+
+        .sync-status-text {
+            flex: 1;
+            font-size: 0.9em;
+        }
+
+        .sync-status.connected .sync-status-text {
+            color: #4caf50;
+        }
+
+        .sync-status.disconnected .sync-status-text {
+            color: #f44336;
+        }
+
+        /* 全部任务筛选器 */
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            overflow-x: auto;
+            padding: 5px 0;
+        }
+
+        .filter-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .filter-btn {
+            padding: 10px 18px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 20px;
+            font-size: 0.9em;
+            color: #666;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .filter-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-emoji {
+            font-size: 4em;
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <!-- 顶部可爱问候 -->
-        <header class="header">
-            <div class="welcome-text">
-                <h1 id="greeting">💖 你好呀！今天是美好的一天 💖</h1>
-                <p class="date-text" id="currentDate"></p>
-                <div id="countdownTimer" class="countdown-timer countdown-normal">
-                    <span class="countdown-emoji">⏰</span>
-                    <span class="countdown-label">今晚8点截止还剩</span>
-                    <span class="countdown-time">--:--:--</span>
+        <!-- ========== 今日页面 ========== -->
+        <div class="page active" id="page-today">
+            <header class="header">
+                <div class="welcome-text">
+                    <h1 id="greeting">💖 你好呀！今天是美好的一天 💖</h1>
+                    <p class="date-text" id="currentDate">2026年3月20日 星期五</p>
+                    <div class="countdown-timer">
+                        <span class="countdown-emoji">⏰</span>
+                        <span class="countdown-time">05:43:00</span>
+                    </div>
                 </div>
-            </div>
-            
-            <!-- 成就展示 -->
-            <div class="achievements">
-                <div class="achievement-badge">
-                    <span class="badge-icon">🏆</span>
-                    <span class="badge-count" id="totalCompleted">0</span>
-                    <span class="badge-label">已完成</span>
-                </div>
-                <div class="achievement-badge">
-                    <span class="badge-icon">🎯</span>
-                    <span class="badge-count" id="streakDays">0</span>
-                    <span class="badge-label">连续打卡</span>
-                </div>
-                <div class="achievement-badge">
-                    <span class="badge-icon">⭐</span>
-                    <span class="badge-count" id="totalStars">0</span>
-                    <span class="badge-label">获得星星</span>
-                </div>
-            </div>
-        </header>
 
-        <!-- 快速添加任务 -->
-        <section class="quick-add">
-            <div class="add-card">
-                <h2>✨ 添加新任务 ✨</h2>
-                <form id="taskForm">
+                <section class="achievements">
+                    <div class="achievement-badge">
+                        <span class="badge-icon">🔥</span>
+                        <span class="badge-count">7</span>
+                        <span class="badge-label">连续打卡</span>
+                    </div>
+                    <div class="achievement-badge">
+                        <span class="badge-icon">✅</span>
+                        <span class="badge-count">23</span>
+                        <span class="badge-label">今日完成</span>
+                    </div>
+                    <div class="achievement-badge">
+                        <span class="badge-icon">⭐</span>
+                        <span class="badge-count">156</span>
+                        <span class="badge-label">总积分</span>
+                    </div>
+                </section>
+            </header>
+
+            <section class="quick-add">
+                <div class="add-card">
+                    <h2>✨ 新任务 ✨</h2>
                     <div class="input-group">
-                        <input type="text" id="taskTitle" placeholder="今天想完成什么呢？" required>
-                        <button type="submit" class="add-btn">➕</button>
+                        <input type="text" placeholder="今天要做什么呢？💭" id="taskTitle">
+                        <button class="add-btn" id="addBtn">➕</button>
                     </div>
-                    <p class="add-hint">💡 只需1分钟就能开始，先迈出第一步！</p>
-                    
-                    <div class="task-options">
-                        <div class="option-group">
-                            <span class="option-label">🎨 优先级</span>
-                            <div class="priority-options">
-                                <label class="priority-label" data-value="low">
-                                    <input type="radio" name="priority" value="low">
-                                    <span class="priority-emoji">🟢</span>
-                                    <span>悠闲</span>
-                                </label>
-                                <label class="priority-label active" data-value="medium">
-                                    <input type="radio" name="priority" value="medium" checked>
-                                    <span class="priority-emoji">🟡</span>
-                                    <span>普通</span>
-                                </label>
-                                <label class="priority-label" data-value="high">
-                                    <input type="radio" name="priority" value="high">
-                                    <span class="priority-emoji">🔴</span>
-                                    <span>重要</span>
-                                </label>
+                </div>
+            </section>
+
+            <section class="progress-section">
+                <div class="progress-card">
+                    <div class="progress-header">
+                        <h3>今日进度</h3>
+                        <span class="progress-stats">23/30</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: 77%"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="tasks-section">
+                <h2 class="section-title">📋 今日任务</h2>
+
+                <div class="task-card priority-high">
+                    <div class="task-header">
+                        <div class="task-checkbox" onclick="toggleTask(this)"></div>
+                        <div class="task-content">
+                            <div class="task-title">完成项目报告</div>
+                            <div class="task-meta">
+                                <span class="task-meta-item">🔴 紧急</span>
+                                <span class="task-meta-item">⏰ 18:00</span>
                             </div>
                         </div>
-                        
-                        <div class="option-group">
-                            <span class="option-label">⏰ 截止时间</span>
-                            <div class="time-options">
-                                <input type="date" id="taskDueDate" class="time-input">
-                                <input type="time" id="taskDueTime" class="time-input">
+                    </div>
+                </div>
+
+                <div class="task-card priority-medium">
+                    <div class="task-header">
+                        <div class="task-checkbox" onclick="toggleTask(this)"></div>
+                        <div class="task-content">
+                            <div class="task-title">学习新技能</div>
+                            <div class="task-meta">
+                                <span class="task-meta-item">🟡 中等</span>
+                                <span class="task-meta-item">⏰ 20:00</span>
                             </div>
                         </div>
-                        
-                        <div class="option-group">
-                            <label class="reminder-toggle">
-                                <input type="checkbox" id="taskReminder">
-                                <span class="toggle-switch"></span>
-                                <span>🔔 提醒我</span>
-                            </label>
+                    </div>
+                </div>
+
+                <div class="task-card completed">
+                    <div class="task-header">
+                        <div class="task-checkbox checked" onclick="toggleTask(this)"></div>
+                        <div class="task-content">
+                            <div class="task-title">晨间锻炼</div>
+                            <div class="task-meta">
+                                <span class="task-meta-item">✅ 已完成</span>
+                            </div>
                         </div>
                     </div>
-                </form>
-            </div>
-        </section>
-
-        <!-- 今日进度条 -->
-        <section class="daily-progress-section">
-            <div class="daily-progress-card">
-                <div class="progress-header">
-                    <span class="progress-title">🌈 今日进度</span>
-                    <span class="progress-stats" id="progressStats">今天完成了 <strong>0</strong> / <strong>0</strong> 个任务</span>
-                    <span class="progress-hours-left" id="hoursLeft">⏳ 今天还有 <strong>--</strong> 小时</span>
                 </div>
-                <div class="daily-progress-bar">
-                    <div class="daily-progress-fill" id="dailyProgressFill" style="width:0%"></div>
-                </div>
-                <div class="progress-percent" id="progressPercent">0%</div>
-            </div>
-        </section>
-
-        <!-- 🌟 现在做这个！推荐区域 -->
-        <section class="recommend-section" id="recommendSection" style="display:none">
-            <div class="recommend-card" id="recommendCard">
-                <div class="recommend-badge">🌟 现在做这个！</div>
-                <div class="recommend-content">
-                    <div class="recommend-task-title" id="recommendTaskTitle">-</div>
-                    <div class="recommend-meta">
-                        <span class="recommend-time-badge" id="recommendTimeBadge">⏱️ 预计 - 分钟</span>
-                        <span class="recommend-priority-badge" id="recommendPriorityBadge">-</span>
-                        <span class="recommend-hint">只需开始就好，迈出第一步！💪</span>
-                    </div>
-                </div>
-                <button class="recommend-start-btn" id="recommendStartBtn" onclick="">🚀 马上开始！</button>
-            </div>
-        </section>
-
-        <!-- 任务列表 -->
-        <section class="task-list-section">
-            <div class="section-header">
-                <h2>📋 我的小任务 📋</h2>
-                <div class="filter-tabs">
-                    <button class="filter-tab active" data-filter="all">全部</button>
-                    <button class="filter-tab" data-filter="pending">进行中</button>
-                    <button class="filter-tab" data-filter="completed">已完成</button>
-                </div>
-            </div>
-            
-            <div id="taskList" class="task-list">
-                <!-- 任务会在这里显示 -->
-            </div>
-            
-            <div id="emptyState" class="empty-state">
-                <div class="empty-emoji">🎉</div>
-                <p>哇!所有任务都完成了!</p>
-                <p>太棒了,奖励自己一个拥抱吧! 💕</p>
-            </div>
-        </section>
-
-        <!-- 每日统计 -->
-        <section class="daily-summary">
-            <h2>📊 今日成就 📊</h2>
-            <div class="summary-cards">
-                <div class="summary-card">
-                    <div class="summary-icon">📝</div>
-                    <div class="summary-info">
-                        <div class="summary-number" id="todayTasks">0</div>
-                        <div class="summary-label">今日任务</div>
-                    </div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-icon">✅</div>
-                    <div class="summary-info">
-                        <div class="summary-number" id="todayCompleted">0</div>
-                        <div class="summary-label">已完成</div>
-                    </div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-icon">⏳</div>
-                    <div class="summary-info">
-                        <div class="summary-number" id="todayRemaining">0</div>
-                        <div class="summary-label">剩余任务</div>
-                    </div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-icon">🎁</div>
-                    <div class="summary-info">
-                        <div class="summary-number" id="earnedStars">0</div>
-                        <div class="summary-label">今日星星</div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 云端同步 -->
-        <section class="cloud-sync">
-            <h2>☁️ 云端同步 ☁️</h2>
-            <p class="sync-desc">数据自动保存到云端,换设备也能用!</p>
-            
-            <!-- 未登录状态 -->
-            <div id="syncNotLoggedIn" class="sync-state">
-                <div class="sync-icon">🔐</div>
-                <p>使用Gitee账号登录,数据自动云端同步</p>
-                <button class="sync-login-btn" id="giteeLoginBtn">
-                    <span>🐧</span> Gitee登录
-                </button>
-                <p class="sync-tip">完全免费 · 国内速度快 · 自动同步</p>
-            </div>
-            
-            <!-- 已登录状态 -->
-            <div id="syncLoggedIn" class="sync-state hidden">
-                <div class="sync-user-info">
-                    <span class="sync-icon">✅</span>
-                    <div>
-                        <p class="sync-username" id="syncUsername">用户名</p>
-                        <p class="sync-status" id="syncStatus">已连接云端</p>
-                    </div>
-                </div>
-                <div class="sync-actions">
-                    <button class="sync-action-btn" id="syncNowBtn">
-                        <span>🔄</span> 立即同步
-                    </button>
-                    <button class="sync-action-btn secondary" id="syncLogoutBtn">
-                        <span>🚪</span> 退出登录
-                    </button>
-                </div>
-                <p class="sync-last-time">最后同步: <span id="lastSyncTime">从未</span></p>
-            </div>
-        </section>
-
-        <!-- 奖励商店 -->
-        <section class="rewards-shop">
-            <h2>🎁 奖励商店 🎁</h2>
-            <p class="shop-intro">用你的星星兑换小奖励吧!</p>
-            <div class="rewards-grid">
-                <div class="reward-item" data-cost="5">
-                    <div class="reward-icon">☕</div>
-                    <div class="reward-name">喝杯奶茶</div>
-                    <div class="reward-cost">5 ⭐</div>
-                    <button class="redeem-btn">兑换</button>
-                </div>
-                <div class="reward-item" data-cost="10">
-                    <div class="reward-icon">🎬</div>
-                    <div class="reward-name">看部电影</div>
-                    <div class="reward-cost">10 ⭐</div>
-                    <button class="redeem-btn">兑换</button>
-                </div>
-                <div class="reward-item" data-cost="15">
-                    <div class="reward-icon">🎮</div>
-                    <div class="reward-name">玩一小时游戏</div>
-                    <div class="reward-cost">15 ⭐</div>
-                    <button class="redeem-btn">兑换</button>
-                </div>
-                <div class="reward-item" data-cost="20">
-                    <div class="reward-icon">🛍️</div>
-                    <div class="reward-name">买个小礼物</div>
-                    <div class="reward-cost">20 ⭐</div>
-                    <button class="redeem-btn">兑换</button>
-                </div>
-                <div class="reward-item" data-cost="30">
-                    <div class="reward-icon">🍽️</div>
-                    <div class="reward-name">吃顿大餐</div>
-                    <div class="reward-cost">30 ⭐</div>
-                    <button class="redeem-btn">兑换</button>
-                </div>
-                <div class="reward-item" data-cost="50">
-                    <div class="reward-icon">✈️</div>
-                    <div class="reward-name">计划一次小旅行</div>
-                    <div class="reward-cost">50 ⭐</div>
-                    <button class="redeem-btn">兑换</button>
-                </div>
-            </div>
-        </section>
-    </div>
-
-    <!-- 完成任务弹窗 -->
-    <div id="completeModal" class="modal">
-        <div class="modal-content complete-modal">
-            <div class="modal-header">
-                <div class="celebration">🎉</div>
-                <h2>太棒了!任务完成!</h2>
-            </div>
-            <div class="modal-body">
-                <div class="task-preview">
-                    <h3 id="completedTaskTitle">任务标题</h3>
-                    <p class="task-stars">获得 <span id="earnedStarsCount">3</span> 颗星星! ⭐</p>
-                </div>
-                
-                <div class="review-section">
-                    <h4>💭 写点感想吧!</h4>
-                    <textarea id="taskReview" placeholder="这个任务完成得怎么样?有什么收获呢?"></textarea>
-                </div>
-                
-                <div class="reward-section">
-                    <h4>🎁 给自己一个小奖励</h4>
-                    <div class="reward-suggestions">
-                        <button class="suggestion-btn" data-reward="给自己一个大大的拥抱">🫂 拥抱</button>
-                        <button class="suggestion-btn" data-reward="听一首喜欢的歌">🎵 听歌</button>
-                        <button class="suggestion-btn" data-reward="吃点小零食">🍪 零食</button>
-                        <button class="suggestion-btn" data-reward="休息5分钟">☕ 休息</button>
-                    </div>
-                    <input type="text" id="customReward" placeholder="或者写下你自己的奖励...">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="skipReview">跳过</button>
-                <button class="btn btn-primary" id="confirmComplete">确认完成! ✨</button>
-            </div>
+            </section>
         </div>
-    </div>
 
-    <!-- 编辑任务弹窗 -->
-    <div id="editModal" class="modal">
-        <div class="modal-content edit-modal">
-            <div class="modal-header">
-                <h2>✏️ 修改任务</h2>
-                <span class="close-btn">&times;</span>
-            </div>
-            <div class="modal-body">
-                <form id="editTaskForm">
-                    <input type="hidden" id="editTaskId">
-                    
-                    <div class="form-group">
-                        <label>任务名称</label>
-                        <input type="text" id="editTaskTitle" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>备注信息</label>
-                        <textarea id="editTaskNotes" placeholder="添加一些备注或提醒..." rows="3"></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>优先级</label>
-                        <div class="priority-options">
-                            <label>
-                                <input type="radio" name="editPriority" value="low">
-                                <span>🟢 悠闲</span>
-                            </label>
-                            <label>
-                                <input type="radio" name="editPriority" value="medium">
-                                <span>🟡 普通</span>
-                            </label>
-                            <label>
-                                <input type="radio" name="editPriority" value="high">
-                                <span>🔴 重要</span>
-                            </label>
+        <!-- ========== 全部任务页面 ========== -->
+        <div class="page" id="page-all">
+            <header class="header">
+                <div class="welcome-text">
+                    <h1>📝 全部任务</h1>
+                    <p class="date-text">共 156 个任务</p>
+                </div>
+            </header>
+
+            <section class="filter-bar">
+                <button class="filter-btn active" data-filter="all">全部</button>
+                <button class="filter-btn" data-filter="pending">未完成</button>
+                <button class="filter-btn" data-filter="completed">已完成</button>
+                <button class="filter-btn" data-filter="high">🔴 紧急</button>
+                <button class="filter-btn" data-filter="today">今日</button>
+                <button class="filter-btn" data-filter="week">本周</button>
+            </section>
+
+            <section class="tasks-section">
+                <div class="task-card priority-high">
+                    <div class="task-header">
+                        <div class="task-checkbox" onclick="toggleTask(this)"></div>
+                        <div class="task-content">
+                            <div class="task-title">完成项目报告</div>
+                            <div class="task-meta">
+                                <span class="task-meta-item">🔴 紧急</span>
+                                <span class="task-meta-item">📅 今天</span>
+                                <span class="task-meta-item">⏰ 18:00</span>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label>截止时间</label>
-                        <input type="date" id="editTaskDueDate">
-                        <input type="time" id="editTaskDueTime">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary close-btn">取消</button>
-                <button class="btn btn-primary" id="saveEdit">保存修改 💾</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 专注模式弹窗 -->
-    <div id="focusModal" class="modal">
-        <div class="modal-content focus-modal">
-            <div class="modal-header">
-                <h2>🎯 专注模式</h2>
-                <span class="close-btn">&times;</span>
-            </div>
-            <div class="modal-body">
-                <div class="focus-task-info">
-                    <h3 id="focusTaskTitle">任务标题</h3>
-                    <p class="focus-task-notes" id="focusTaskNotes"></p>
                 </div>
-                
-                <div class="focus-timer">
-                    <div class="timer-display">
-                        <span id="timerMinutes">25</span>
-                        <span class="timer-colon">:</span>
-                        <span id="timerSeconds">00</span>
-                    </div>
-                    <div class="timer-presets">
-                        <button class="preset-btn" data-time="15">15分钟</button>
-                        <button class="preset-btn active" data-time="25">25分钟</button>
-                        <button class="preset-btn" data-time="45">45分钟</button>
-                        <button class="preset-btn" data-time="60">60分钟</button>
+
+                <div class="task-card priority-medium">
+                    <div class="task-header">
+                        <div class="task-checkbox" onclick="toggleTask(this)"></div>
+                        <div class="task-content">
+                            <div class="task-title">学习新技能</div>
+                            <div class="task-meta">
+                                <span class="task-meta-item">🟡 中等</span>
+                                <span class="task-meta-item">📅 今天</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="focus-motivation">
-                    <p id="focusMotivationText">💪 保持专注,你可以的!</p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary close-btn">稍后再说</button>
-                <button class="btn btn-primary" id="startFocus">开始专注! 🚀</button>
-            </div>
-        </div>
-    </div>
 
-    <!-- 专注进行中弹窗 -->
-    <div id="focusRunningModal" class="modal">
-        <div class="modal-content focus-running">
-            <div class="focus-running-content">
-                <div class="focus-running-header">
-                    <h2>🎯 专注中...</h2>
-                    <p id="focusRunningTask"></p>
-                </div>
-                
-                <div class="running-timer">
-                    <span id="runningMinutes">25</span>
-                    <span class="timer-colon">:</span>
-                    <span id="runningSeconds">00</span>
-                </div>
-                
-                <div class="focus-progress">
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progressFill"></div>
+                <div class="task-card priority-low">
+                    <div class="task-header">
+                        <div class="task-checkbox" onclick="toggleTask(this)"></div>
+                        <div class="task-content">
+                            <div class="task-title">整理房间</div>
+                            <div class="task-meta">
+                                <span class="task-meta-item">🟢 一般</span>
+                                <span class="task-meta-item">📅 本周</span>
+                            </div>
+                        </div>
                     </div>
-                    <p class="progress-text" id="progressText">已完成 0%</p>
                 </div>
-                
-                <div class="focus-running-actions">
-                    <button class="btn btn-warning" id="pauseFocus">⏸️ 暂停</button>
-                    <button class="btn btn-danger" id="stopFocus">🛑 结束</button>
+
+                <div class="task-card completed">
+                    <div class="task-header">
+                        <div class="task-checkbox checked" onclick="toggleTask(this)"></div>
+                        <div class="task-content">
+                            <div class="task-title">晨间锻炼</div>
+                            <div class="task-meta">
+                                <span class="task-meta-item">✅ 已完成</span>
+                                <span class="task-meta-item">📅 今天</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+
+                <div class="task-card completed">
+                    <div class="task-header">
+                        <div class="task-checkbox checked" onclick="toggleTask(this)"></div>
+                        <div class="task-content">
+                            <div class="task-title">阅读30分钟</div>
+                            <div class="task-meta">
+                                <span class="task-meta-item">✅ 已完成</span>
+                                <span class="task-meta-item">📅 昨天</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ========== 奖励页面 ========== -->
+        <div class="page" id="page-rewards">
+            <header class="header">
+                <div class="welcome-text">
+                    <h1>🎁 奖励商店</h1>
+                    <p class="date-text">当前积分：<span style="color: #FFD700; font-weight: bold;">⭐ 156</span></p>
+                </div>
+            </header>
+
+            <section>
+                <div class="reward-card">
+                    <div class="reward-header">
+                        <span class="reward-icon">🎮</span>
+                        <div>
+                            <div class="reward-title">游戏时间 1小时</div>
+                            <div class="reward-cost">⭐ 50</div>
+                        </div>
+                    </div>
+                    <p class="reward-desc">完成今天的任务后，可以自由地玩游戏1小时！🎮✨</p>
+                    <button class="claim-btn" onclick="claimReward(this, 50)">领取奖励</button>
+                </div>
+
+                <div class="reward-card">
+                    <div class="reward-header">
+                        <span class="reward-icon">🍦</span>
+                        <div>
+                            <div class="reward-title">冰淇淋一支</div>
+                            <div class="reward-cost">⭐ 30</div>
+                        </div>
+                    </div>
+                    <p class="reward-desc">奖励自己一支美味的冰淇淋！🍦甜蜜一下～</p>
+                    <button class="claim-btn" onclick="claimReward(this, 30)">领取奖励</button>
+                </div>
+
+                <div class="reward-card">
+                    <div class="reward-header">
+                        <span class="reward-icon">📺</span>
+                        <div>
+                            <div class="reward-title">追剧2小时</div>
+                            <div class="reward-cost">⭐ 80</div>
+                        </div>
+                    </div>
+                    <p class="reward-desc">放松一下，追自己喜欢看的剧！📺🍿</p>
+                    <button class="claim-btn" onclick="claimReward(this, 80)">领取奖励</button>
+                </div>
+
+                <div class="reward-card">
+                    <div class="reward-header">
+                        <span class="reward-icon">🛍️</span>
+                        <div>
+                            <div class="reward-title">购物50元</div>
+                            <div class="reward-cost">⭐ 200</div>
+                        </div>
+                    </div>
+                    <div class="reward-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 78%"></div>
+                        </div>
+                        <div class="reward-stats">
+                            <span>已积累：156/200</span>
+                            <span>还差44分</span>
+                        </div>
+                    </div>
+                    <button class="claim-btn" disabled>领取奖励</button>
+                </div>
+
+                <div class="reward-card locked">
+                    <div class="reward-header">
+                        <span class="reward-icon">✈️</span>
+                        <div>
+                            <div class="reward-title">周末旅行</div>
+                            <div class="reward-cost">⭐ 1000</div>
+                        </div>
+                    </div>
+                    <p class="reward-desc">完成一个月的任务后，奖励自己一次周末旅行！🌄</p>
+                    <button class="claim-btn" disabled>领取奖励</button>
+                </div>
+            </section>
+        </div>
+
+        <!-- ========== 设置页面 ========== -->
+        <div class="page" id="page-settings">
+            <header class="header">
+                <div class="welcome-text">
+                    <h1>⚙️ 设置</h1>
+                    <p class="date-text">个性化你的体验</p>
+                </div>
+            </header>
+
+            <section>
+                <!-- 云同步 -->
+                <div class="setting-card">
+                    <h3>☁️ 云同步</h3>
+                    <div class="sync-status connected">
+                        <span style="font-size: 2em;">✅</span>
+                        <div class="sync-status-text">
+                            <div>已连接到 Gitee</div>
+                            <div style="font-size: 0.8em; opacity: 0.8;">上次同步：刚刚</div>
+                        </div>
+                    </div>
+                    <div class="setting-item" style="margin-top: 15px;">
+                        <div class="setting-label">
+                            <span class="setting-icon">🔄</span>
+                            <div>
+                                <div>自动同步</div>
+                                <div class="setting-desc">自动同步任务到云端</div>
+                            </div>
+                        </div>
+                        <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+                    </div>
+                    <button class="setting-btn primary" style="width: 100%; margin-top: 12px;">
+                        🔄 立即同步
+                    </button>
+                </div>
+
+                <!-- 提醒 -->
+                <div class="setting-card">
+                    <h3>🔔 提醒</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <span class="setting-icon">⏰</span>
+                            <div>
+                                <div>任务提醒</div>
+                                <div class="setting-desc">在截止时间前提醒我</div>
+                            </div>
+                        </div>
+                        <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <span class="setting-icon">📅</span>
+                            <div>
+                                <div>截止时间</div>
+                                <div class="setting-desc">每日任务截止时间</div>
+                            </div>
+                        </div>
+                        <input type="time" class="setting-input" value="20:00" style="width: 120px;">
+                    </div>
+                </div>
+
+                <!-- 外观 -->
+                <div class="setting-card">
+                    <h3>🎨 外观</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <span class="setting-icon">🌙</span>
+                            <div>
+                                <div>深色模式</div>
+                                <div class="setting-desc">保护眼睛，夜间使用</div>
+                            </div>
+                        </div>
+                        <div class="toggle-switch" onclick="toggleSwitch(this)"></div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <span class="setting-icon">🎭</span>
+                            <div>
+                                <div>主题色</div>
+                                <div class="setting-desc">选择你喜欢的颜色</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <div style="width: 30px; height: 30px; background: #FF9A9E; border-radius: 50%; border: 3px solid #667eea; cursor: pointer;"></div>
+                            <div style="width: 30px; height: 30px; background: #667eea; border-radius: 50%; cursor: pointer;"></div>
+                            <div style="width: 30px; height: 30px; background: #4caf50; border-radius: 50%; cursor: pointer;"></div>
+                            <div style="width: 30px; height: 30px; background: #f44336; border-radius: 50%; cursor: pointer;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 数据 -->
+                <div class="setting-card">
+                    <h3>💾 数据管理</h3>
+                    <button class="setting-btn primary" style="width: 100%; margin-bottom: 10px;">
+                        📤 导出数据
+                    </button>
+                    <button class="setting-btn primary" style="width: 100%; margin-bottom: 10px;">
+                        📥 导入数据
+                    </button>
+                    <button class="setting-btn danger" style="width: 100%;">
+                        🗑️ 清除所有数据
+                    </button>
+                </div>
+            </section>
         </div>
     </div>
 
-    <!-- 专注完成弹窗 -->
-    <div id="focusCompleteModal" class="modal">
-        <div class="modal-content focus-complete">
-            <div class="celebration">🎉</div>
-            <h2>太棒了!专注完成!</h2>
-            <p class="focus-time">你专注了 <span id="focusTimeSpent">25</span> 分钟</p>
-            <p class="focus-stars">获得 <span id="focusStarsEarned">3</span> 颗额外星星! ⭐</p>
-            
-            <div class="focus-complete-actions">
-                <button class="btn btn-primary" id="closeFocusComplete">继续加油! 💪</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 通知 -->
-    <div id="notification" class="notification">
-        <div class="notification-content">
-            <span class="notification-icon"></span>
-            <span class="notification-text"></span>
-        </div>
-    </div>
-
-    <!-- 连击提示 -->
-    <div id="comboToast" class="combo-toast" style="display:none">
-        <div class="combo-inner">
-            <div class="combo-emoji" id="comboEmoji">🔥</div>
-            <div class="combo-text" id="comboText">连击 x2！太猛了！</div>
-        </div>
-    </div>
-
-    <!-- 撒花动画容器 -->
-    <div id="confetti" class="confetti"></div>
-
-    <!-- 移动端底部导航栏 -->
-    <nav class="bottom-nav" id="bottomNav">
-        <div class="nav-item active" data-page="today">
+    <!-- 底部导航栏 -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" data-page="today" onclick="switchPage('today')">
             <span class="nav-icon">📋</span>
             <span class="nav-label">今日</span>
         </div>
-        <div class="nav-item" data-page="all">
+        <div class="nav-item" data-page="all" onclick="switchPage('all')">
             <span class="nav-icon">📝</span>
             <span class="nav-label">全部</span>
         </div>
-        <div class="nav-item" data-page="rewards">
+        <div class="nav-item" data-page="rewards" onclick="switchPage('rewards')">
             <span class="nav-icon">🎁</span>
             <span class="nav-label">奖励</span>
         </div>
-        <div class="nav-item" data-page="settings">
+        <div class="nav-item" data-page="settings" onclick="switchPage('settings')">
             <span class="nav-icon">⚙️</span>
             <span class="nav-label">设置</span>
         </div>
     </nav>
 
-    <!-- 悬浮添加按钮 -->
-    <button class="fab" id="fabAdd" title="添加任务">
-        ➕
-    </button>
+    <!-- 悬浮按钮 -->
+    <button class="fab">➕</button>
 
+    <!-- 通知 -->
+    <div class="notification success">
+        <span class="notification-icon">🎉</span>
+        <span class="notification-text">任务完成啦！太棒了！</span>
+    </div>
+
+    <script>
+        // 切换页面
+        function switchPage(page) {
+            // 隐藏所有页面
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            // 显示目标页面
+            document.getElementById('page-' + page).classList.add('active');
+
+            // 更新导航栏状态
+            document.querySelectorAll('.nav-item').forEach(item => {
+                if (item.dataset.page === page) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+
+            // 触发页面切换动画
+            triggerPageTransition(page);
+        }
+
+        // 页面切换动画
+        function triggerPageTransition(page) {
+            const pageEl = document.getElementById('page-' + page);
+            pageEl.style.animation = 'none';
+            pageEl.offsetHeight; // 触发重绘
+            pageEl.style.animation = 'fadeIn 0.3s ease';
+        }
+
+        // 切换任务
+        function toggleTask(checkbox) {
+            const card = checkbox.closest('.task-card');
+
+            if (checkbox.classList.contains('checked')) {
+                checkbox.classList.remove('checked');
+                card.classList.remove('completed');
+            } else {
+                checkbox.classList.add('checked');
+                card.classList.add('completed');
+
+                // 触发庆祝动画
+                triggerCelebration();
+
+                // 显示通知
+                showNotification('任务完成啦！太棒了！', 'success');
+            }
+        }
+
+        // 筛选器
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+
+                // 触发筛选动画
+                const filter = this.dataset.filter;
+                filterTasks(filter);
+            });
+        });
+
+        // 筛选任务
+        function filterTasks(filter) {
+            const tasks = document.querySelectorAll('#page-all .task-card');
+            tasks.forEach(task => {
+                task.style.animation = 'none';
+                task.offsetHeight;
+                task.style.animation = 'fadeIn 0.3s ease';
+            });
+        }
+
+        // 领取奖励
+        function claimReward(btn, cost) {
+            btn.disabled = true;
+            btn.textContent = '已领取 🎉';
+            triggerCelebration();
+            showNotification('奖励已领取！享受吧！🎁', 'success');
+        }
+
+        // 开关切换
+        function toggleSwitch(el) {
+            el.classList.toggle('active');
+        }
+
+        // 庆祝动画
+        function triggerCelebration() {
+            const emojis = ['🌟', '✨', '💖', '🎀', '🌸', '🎈', '🎁', '💝'];
+
+            for (let i = 0; i < 12; i++) {
+                setTimeout(() => {
+                    const emoji = document.createElement('div');
+                    emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                    emoji.style.cssText = `
+                        position: fixed;
+                        top: 50%;
+                        left: 50%;
+                        font-size: 30px;
+                        pointer-events: none;
+                        z-index: 9999;
+                        animation: celebrate 1s ease-out forwards;
+                        --tx: ${(Math.random() - 0.5) * 300}px;
+                        --ty: ${(Math.random() - 0.5) * 300 - 200}px;
+                        --r: ${Math.random() * 720}deg;
+                    `;
+                    document.body.appendChild(emoji);
+
+                    setTimeout(() => emoji.remove(), 1000);
+                }, i * 50);
+            }
+        }
+
+        // 显示通知
+        function showNotification(message, type) {
+            const notification = document.querySelector('.notification');
+            notification.querySelector('.notification-text').textContent = message;
+            notification.classList.add('show');
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // 更新时间
+        function updateTime() {
+            const now = new Date();
+            const hours = 20 - now.getHours();
+            const minutes = 60 - now.getMinutes();
+            const seconds = 60 - now.getSeconds();
+            document.querySelector('.countdown-time').textContent =
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+    </script>
     <script src="app.js"></script>
 </body>
 </html>
