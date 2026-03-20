@@ -142,17 +142,26 @@ class CuteTaskManager {
     // 绑定事件
     bindEvents() {
         // 添加任务
-        document.getElementById('taskForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.addTask();
-        });
+        const taskForm = document.getElementById('taskForm');
+        if (taskForm) {
+            taskForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.addTask();
+            });
+        }
+
+        const addBtn = document.getElementById('addBtn');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => this.addTask());
+        }
 
         // 优先级选择
         document.querySelectorAll('.priority-label').forEach(label => {
             label.addEventListener('click', (e) => {
                 document.querySelectorAll('.priority-label').forEach(l => l.classList.remove('active'));
                 label.classList.add('active');
-                label.querySelector('input').checked = true;
+                const input = label.querySelector('input');
+                if (input) input.checked = true;
             });
         });
 
@@ -165,58 +174,53 @@ class CuteTaskManager {
             });
         });
 
+        // 全部任务页面的筛选按钮
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.renderAllTasks(btn.dataset.filter);
+            });
+        });
+
         // 完成任务弹窗
-        document.getElementById('confirmComplete').addEventListener('click', () => this.completeTaskWithReview());
-        document.getElementById('skipReview').addEventListener('click', () => this.completeTaskWithoutReview());
+        const confirmComplete = document.getElementById('confirmComplete');
+        if (confirmComplete) {
+            confirmComplete.addEventListener('click', () => this.completeTaskWithReview());
+        }
+        const skipReview = document.getElementById('skipReview');
+        if (skipReview) {
+            skipReview.addEventListener('click', () => this.completeTaskWithoutReview());
+        }
 
         // 复核建议
         document.querySelectorAll('.suggestion-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.suggestion-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
-                document.getElementById('customReward').value = btn.dataset.reward;
+                const customReward = document.getElementById('customReward');
+                if (customReward) customReward.value = btn.dataset.reward;
             });
         });
 
         // 编辑任务
-        document.getElementById('saveEdit').addEventListener('click', () => this.saveEdit());
+        const saveEdit = document.getElementById('saveEdit');
+        if (saveEdit) {
+            saveEdit.addEventListener('click', () => this.saveEdit());
+        }
         document.querySelectorAll('.close-btn').forEach(btn => {
-            btn.addEventListener('click', () => this.closeModal(btn.closest('.modal').id));
+            btn.addEventListener('click', () => {
+                const modal = btn.closest('.modal');
+                if (modal) this.closeModal(modal.id);
+            });
         });
 
         // 奖励兑换
         document.querySelectorAll('.redeem-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => this.redeemReward(e.target.closest('.reward-item')));
-        });
-
-        // 数据导出
-        const exportBtn = document.getElementById('exportBtn');
-        if (exportBtn) exportBtn.addEventListener('click', () => this.exportData());
-
-        const importFile = document.getElementById('importFile');
-        if (importFile) importFile.addEventListener('change', (e) => this.importData(e));
-
-        // 专注模式
-        document.querySelectorAll('.preset-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                this.focusTotalTime = parseInt(btn.dataset.time) * 60;
-                this.focusRemainingTime = this.focusTotalTime;
-                this.updateTimerDisplay();
+            btn.addEventListener('click', (e) => {
+                const rewardItem = e.target.closest('.reward-item');
+                if (rewardItem) this.redeemReward(rewardItem);
             });
-        });
-
-        document.getElementById('startFocus').addEventListener('click', () => this.startFocus());
-        document.getElementById('pauseFocus').addEventListener('click', () => this.togglePauseFocus());
-        document.getElementById('stopFocus').addEventListener('click', () => this.stopFocus());
-        document.getElementById('closeFocusComplete').addEventListener('click', () => this.closeModal('focusCompleteModal'));
-
-        // 点击模态框外部关闭
-        window.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal')) {
-                this.closeModal(e.target.id);
-            }
         });
 
         // 移动端导航栏
@@ -239,6 +243,40 @@ class CuteTaskManager {
                 this.showAddTaskForm();
             });
         }
+
+        // 数据导出
+        const exportBtn = document.getElementById('exportBtn');
+        if (exportBtn) exportBtn.addEventListener('click', () => this.exportData());
+
+        const importFile = document.getElementById('importFile');
+        if (importFile) importFile.addEventListener('change', (e) => this.importData(e));
+
+        // 专注模式
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.focusTotalTime = parseInt(btn.dataset.time) * 60;
+                this.focusRemainingTime = this.focusTotalTime;
+                this.updateTimerDisplay();
+            });
+        });
+
+        const startFocus = document.getElementById('startFocus');
+        if (startFocus) startFocus.addEventListener('click', () => this.startFocus());
+        const pauseFocus = document.getElementById('pauseFocus');
+        if (pauseFocus) pauseFocus.addEventListener('click', () => this.togglePauseFocus());
+        const stopFocus = document.getElementById('stopFocus');
+        if (stopFocus) stopFocus.addEventListener('click', () => this.stopFocus());
+        const closeFocusComplete = document.getElementById('closeFocusComplete');
+        if (closeFocusComplete) closeFocusComplete.addEventListener('click', () => this.closeModal('focusCompleteModal'));
+
+        // 点击模态框外部关闭
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                this.closeModal(e.target.id);
+            }
+        });
     }
 
     // 添加任务
@@ -247,14 +285,17 @@ class CuteTaskManager {
         if (!title) return;
 
         const now = new Date();
+        const priority = document.querySelector('input[name="priority"]:checked');
+        const deadline = document.getElementById('taskDeadline');
+
         const task = {
             id: Date.now(),
             title: title,
             notes: '',
-            priority: document.querySelector('input[name="priority"]:checked').value,
-            dueDate: document.getElementById('taskDueDate').value,
-            dueTime: document.getElementById('taskDueTime').value,
-            reminder: document.getElementById('taskReminder').checked,
+            priority: priority ? priority.value : 'medium',
+            dueDate: deadline ? deadline.value : '20:00',
+            dueTime: deadline ? deadline.value : '20:00',
+            reminder: false,
             completed: false,
             createdAt: now.toISOString(),
             lastModified: now.toISOString(),
@@ -270,9 +311,14 @@ class CuteTaskManager {
         this.updateStats();
         this.showNotification('📝 任务添加成功!', 'success');
 
+        // 触发庆祝动画
+        this.triggerCelebration();
+
         // 重置表单
         document.getElementById('taskTitle').value = '';
-        this.initDateTimeDefaults();
+        if (priority) priority.checked = false;
+        document.querySelector('input[name="priority"][value="medium"]').checked = true;
+        if (deadline) deadline.value = '20:00';
     }
 
     // 渲染任务列表
@@ -310,6 +356,56 @@ class CuteTaskManager {
 
         // 渲染后更新推荐高亮
         this.updateRecommendSection();
+    }
+
+    // 渲染全部任务列表（用于全部任务页面）
+    renderAllTasks(filter = 'all') {
+        const taskList = document.getElementById('allTasksList');
+        if (!taskList) return;
+
+        let filteredTasks = [...this.tasks];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const weekAgo = new Date(today);
+        weekAgo.setDate(weekAgo.getDate() - 7);
+
+        // 根据筛选条件过滤
+        if (filter === 'pending') {
+            filteredTasks = filteredTasks.filter(t => !t.completed);
+        } else if (filter === 'completed') {
+            filteredTasks = filteredTasks.filter(t => t.completed);
+        } else if (filter === 'high') {
+            filteredTasks = filteredTasks.filter(t => t.priority === 'high' && !t.completed);
+        } else if (filter === 'today') {
+            filteredTasks = filteredTasks.filter(t => {
+                const taskDate = new Date(t.createdAt);
+                return taskDate >= today && !t.completed;
+            });
+        } else if (filter === 'week') {
+            filteredTasks = filteredTasks.filter(t => {
+                const taskDate = new Date(t.createdAt);
+                return taskDate >= weekAgo && !t.completed;
+            });
+        }
+
+        // 按优先级和创建时间排序
+        filteredTasks.sort((a, b) => {
+            if (a.completed !== b.completed) {
+                return a.completed ? 1 : -1;
+            }
+            const priorityOrder = { high: 0, medium: 1, low: 2 };
+            if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
+                return priorityOrder[a.priority] - priorityOrder[b.priority];
+            }
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+
+        if (filteredTasks.length === 0) {
+            taskList.innerHTML = '<div class="empty-state"><p>暂无任务</p></div>';
+        } else {
+            taskList.innerHTML = filteredTasks.map(task => this.createTaskHTML(task)).join('');
+        }
     }
 
     // 创建任务HTML
